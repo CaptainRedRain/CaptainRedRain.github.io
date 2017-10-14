@@ -102,7 +102,7 @@
 <meta property="og:site_name" content="Dabbler">
 <meta property="og:description" content="一、ThreadPoolExecutor最小线程数：当任务队列为空时，线程池中最少需要保持的线程数量，这样做是考虑创建线程时一个相对耗费资源的操作，应该尽量避免，当有新任务被投入队列时，总有线程立刻处理。最大线程数：当需要处理的任务过多时，线程池能够拥有的最大线程数。这样做事为了保证不会创建过多线程，线程运行需要依赖CPU等资源，线程过多会降低性能。线程池任务数量：线程池有一个列表或者队列来存放需">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2017-10-14T22:51:13.000Z">
+<meta property="og:updated_time" content="2017-10-14T22:53:02.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="线程池">
 <meta name="twitter:description" content="一、ThreadPoolExecutor最小线程数：当任务队列为空时，线程池中最少需要保持的线程数量，这样做是考虑创建线程时一个相对耗费资源的操作，应该尽量避免，当有新任务被投入队列时，总有线程立刻处理。最大线程数：当需要处理的任务过多时，线程池能够拥有的最大线程数。这样做事为了保证不会创建过多线程，线程运行需要依赖CPU等资源，线程过多会降低性能。线程池任务数量：线程池有一个列表或者队列来存放需">
@@ -374,7 +374,10 @@
 <ul>
 <li>有任务需要被执行</li>
 <li>当前线程池中所有线程都处于工作状态</li>
-<li>当前线程池中线程数没有达到最大线程数<br>根据任务队列种类，创建方式分为：</li>
+<li>当前线程池中线程数没有达到最大线程数</li>
+</ul>
+<p>根据任务队列种类，创建方式分为：</p>
+<ul>
 <li>SynchronousQueue: 这个队列的特点是不能放置任何任务在队列中，当有任务被提交时使用SynchronousQueue的线程池会立即为该任务创建一个线程（如果线程数量达到最大时该任务会被拒绝）。这种队列适合任务数量小的时候采用。</li>
 <li>无限队列: 例如LinkedBlockingQueue, 如何被提交的任务都不会被拒绝，线程池会忽略最大线程这一参数，意味着线程池的最大线程数就变成了设置的最小线程数。所以在使用这种队列时，通常将最大线程和最小线程设置成相等，相当于使用固定线程数量的线程池。</li>
 <li>有限队列: 例如ArrayBlockingQueue，当最小线程都在工作状态而且队列已满，线程池才会创建新线程从队列中拿走任务。</li>
