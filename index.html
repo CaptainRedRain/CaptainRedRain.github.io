@@ -371,7 +371,7 @@
       
         
           
-            <h2 id="一、ThreadPoolExecutor"><a href="#一、ThreadPoolExecutor" class="headerlink" title="一、ThreadPoolExecutor"></a>一、ThreadPoolExecutor</h2><p>最小线程数：当任务队列为空时，线程池中最少需要保持的线程数量，这样做是考虑创建线程时一个相对耗费资源的操作，应该尽量避免，当有新任务被投入队列时，总有线程立刻处理。<br>最大线程数：当需要处理的任务过多时，线程池能够拥有的最大线程数。这样做事为了保证不会创建过多线程，线程运行需要依赖CPU等资源，线程过多会降低性能。<br>线程池任务数量：线程池有一个列表或者队列来存放需要被执行的任务，当任务数量达到最大时再尝试增加新任务会失败。ThreadPoolExecutor有一个rejectedExecution方法来拒绝该任务。<br>定制ThreadPoolExecutor：<br>线程池同时满足以下条件就会创建一个新的线程：</p>
+            <h2 id="ThreadPoolExecutor"><a href="#ThreadPoolExecutor" class="headerlink" title="ThreadPoolExecutor"></a>ThreadPoolExecutor</h2><p>最小线程数：当任务队列为空时，线程池中最少需要保持的线程数量，这样做是考虑创建线程时一个相对耗费资源的操作，应该尽量避免，当有新任务被投入队列时，总有线程立刻处理。<br>最大线程数：当需要处理的任务过多时，线程池能够拥有的最大线程数。这样做事为了保证不会创建过多线程，线程运行需要依赖CPU等资源，线程过多会降低性能。<br>线程池任务数量：线程池有一个列表或者队列来存放需要被执行的任务，当任务数量达到最大时再尝试增加新任务会失败。ThreadPoolExecutor有一个rejectedExecution方法来拒绝该任务。<br>定制ThreadPoolExecutor：<br>线程池同时满足以下条件就会创建一个新的线程：</p>
 <ul>
 <li>有任务需要被执行</li>
 <li>当前线程池中所有线程都处于工作状态</li>
@@ -383,14 +383,14 @@
 <li>无限队列: 例如LinkedBlockingQueue, 如何被提交的任务都不会被拒绝，线程池会忽略最大线程这一参数，意味着线程池的最大线程数就变成了设置的最小线程数。所以在使用这种队列时，通常将最大线程和最小线程设置成相等，相当于使用固定线程数量的线程池。</li>
 <li>有限队列: 例如ArrayBlockingQueue，当最小线程都在工作状态而且队列已满，线程池才会创建新线程从队列中拿走任务。</li>
 </ul>
-<h2 id="二、ForkJoinPool"><a href="#二、ForkJoinPool" class="headerlink" title="二、ForkJoinPool"></a>二、ForkJoinPool</h2><p>ForkJoinPool使用无线队列来保存要执行的任务，线程数量通过构造函数传入，如果没有向构造函数传入希望的线程数量，那么当前计算机可用的CPU数量会被设置成线程数量。<br>使用ForkJoinPool时，能够让其中的线程创建新的任务，并挂起当前任务，此时线程就能够从队列中选择子任务执行。<br>ForkJoinPool的另外一个特性是它能够实现工作窃取(Work Stealing)，在该线程池的每个线程中会维护一个队列来存放需要被执行的任务。当线程自身队列中的任务都执行完毕后，它会从别的线程中拿到未被执行的任务并帮助它执行。<br>所以一个结论就是：当任务的任务量均衡时，选择ThreadPoolExecutor往往更好(ForkJoinPool会创建子任务，导致GC工作量增加)，反之则选择ForkJoinPool。<br>另一个影响ForkJoinPool性能的因素是停止进行任务分割的阈值。<br>要把任务提交到这个池，必须创建RecursiveTask<r>的一个子类，其中R是并行化任务以及所有子任务产生的结果类型。如果不返回结果，则是RecursiveAction类型。要定义RecursiveTask，只需实现唯一的抽象方法compute()。在compute()方法中使用fork(), compute(), join()创建子任务并合并结果。fork()方法利用另一个ForkJoinPool线程异步执行新创建的子任务，join()读取子任务结果，如果尚未完成则等待。<br>使用分支/合并框架的最佳做法：</r></p>
+<h2 id="ForkJoinPool"><a href="#ForkJoinPool" class="headerlink" title="ForkJoinPool"></a>ForkJoinPool</h2><p>ForkJoinPool使用无线队列来保存要执行的任务，线程数量通过构造函数传入，如果没有向构造函数传入希望的线程数量，那么当前计算机可用的CPU数量会被设置成线程数量。<br>使用ForkJoinPool时，能够让其中的线程创建新的任务，并挂起当前任务，此时线程就能够从队列中选择子任务执行。<br>ForkJoinPool的另外一个特性是它能够实现工作窃取(Work Stealing)，在该线程池的每个线程中会维护一个队列来存放需要被执行的任务。当线程自身队列中的任务都执行完毕后，它会从别的线程中拿到未被执行的任务并帮助它执行。<br>所以一个结论就是：当任务的任务量均衡时，选择ThreadPoolExecutor往往更好(ForkJoinPool会创建子任务，导致GC工作量增加)，反之则选择ForkJoinPool。<br>另一个影响ForkJoinPool性能的因素是停止进行任务分割的阈值。<br>要把任务提交到这个池，必须创建RecursiveTask<r>的一个子类，其中R是并行化任务以及所有子任务产生的结果类型。如果不返回结果，则是RecursiveAction类型。要定义RecursiveTask，只需实现唯一的抽象方法compute()。在compute()方法中使用fork(), compute(), join()创建子任务并合并结果。fork()方法利用另一个ForkJoinPool线程异步执行新创建的子任务，join()读取子任务结果，如果尚未完成则等待。<br>使用分支/合并框架的最佳做法：</r></p>
 <ul>
 <li>对一个任务调用join方法会阻塞调用方，因此有必要在两个子任务的计算都开始之后再调用它。</li>
 <li>不应该在RecursiveTask内部使用ForkJoinPool的invoke方法，应该直接调用compute或fork方法，只有顺序代码才应该用invoke启动并行运算。</li>
 <li>fork()会用另一个线程来处理子任务，同时对左边和右边子任务调用fork()方法效率比直接对其中一个调用compute低，这样可以为其中一个子任务重用同一线程，避免线程池多分配一个任务造成的开销。</li>
 <li>一个任务可以分解成多个独立的子任务才能让性能在并行化时有所提升</li>
 </ul>
-<h2 id="三、自动并行化"><a href="#三、自动并行化" class="headerlink" title="三、自动并行化"></a>三、自动并行化</h2><p>Java 8引入了自动并行化概念，能够让一部分Java代码自动并行方式执行，例如parrellStream。<br>Java 8为ForkJoinPool添加了一个通用线程池，用来处理没有别显示提交到任何线程池的任务，默认线程数量等于运行计算机上的处理器数量。<br>但是这样存在一个严重的问题：该池是所有并行流共享的。默认情况，fork/join池会为每个处理器分配一个线程。假设你有一台16核的机器，这样你就只能创建16个线程。对CPU密集型的任务来说，这样是有意义的，因为你的机器确实只能执行16个线程，IO密集型任务会出现相互等待而被阻塞。</p>
+<h2 id="自动并行化"><a href="#自动并行化" class="headerlink" title="自动并行化"></a>自动并行化</h2><p>Java 8引入了自动并行化概念，能够让一部分Java代码自动并行方式执行，例如parrellStream。<br>Java 8为ForkJoinPool添加了一个通用线程池，用来处理没有别显示提交到任何线程池的任务，默认线程数量等于运行计算机上的处理器数量。<br>但是这样存在一个严重的问题：该池是所有并行流共享的。默认情况，fork/join池会为每个处理器分配一个线程。假设你有一台16核的机器，这样你就只能创建16个线程。对CPU密集型的任务来说，这样是有意义的，因为你的机器确实只能执行16个线程，IO密集型任务会出现相互等待而被阻塞。</p>
 
           
         
