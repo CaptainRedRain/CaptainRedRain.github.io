@@ -102,7 +102,7 @@
 <meta property="og:site_name" content="Dabbler">
 <meta property="og:description" content="一、ThreadPoolExecutor最小线程数：当任务队列为空时，线程池中最少需要保持的线程数量，这样做是考虑创建线程时一个相对耗费资源的操作，应该尽量避免，当有新任务被投入队列时，总有线程立刻处理。最大线程数：当需要处理的任务过多时，线程池能够拥有的最大线程数。这样做事为了保证不会创建过多线程，线程运行需要依赖CPU等资源，线程过多会降低性能。线程池任务数量：线程池有一个列表或者队列来存放需">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2017-10-14T22:48:22.000Z">
+<meta property="og:updated_time" content="2017-10-14T22:51:13.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="线程池">
 <meta name="twitter:description" content="一、ThreadPoolExecutor最小线程数：当任务队列为空时，线程池中最少需要保持的线程数量，这样做是考虑创建线程时一个相对耗费资源的操作，应该尽量避免，当有新任务被投入队列时，总有线程立刻处理。最大线程数：当需要处理的任务过多时，线程池能够拥有的最大线程数。这样做事为了保证不会创建过多线程，线程运行需要依赖CPU等资源，线程过多会降低性能。线程池任务数量：线程池有一个列表或者队列来存放需">
@@ -384,8 +384,9 @@
 <li>对一个任务调用join方法会阻塞调用方，因此有必要在两个子任务的计算都开始之后再调用它。</li>
 <li>不应该在RecursiveTask内部使用ForkJoinPool的invoke方法，应该直接调用compute或fork方法，只有顺序代码才应该用invoke启动并行运算。</li>
 <li>fork()会用另一个线程来处理子任务，同时对左边和右边子任务调用fork()方法效率比直接对其中一个调用compute低，这样可以为其中一个子任务重用同一线程，避免线程池多分配一个任务造成的开销。</li>
-<li>一个任务可以分解成多个独立的子任务才能让性能在并行化时有所提升<br>三、自动并行化<br>Java 8引入了自动并行化概念，能够让一部分Java代码自动并行方式执行，例如parrellStream。<br>Java 8为ForkJoinPool添加了一个通用线程池，用来处理没有别显示提交到任何线程池的任务，默认线程数量等于运行计算机上的处理器数量。<br>但是这样存在一个严重的问题：该池是所有并行流共享的。默认情况，fork/join池会为每个处理器分配一个线程。假设你有一台16核的机器，这样你就只能创建16个线程。对CPU密集型的任务来说，这样是有意义的，因为你的机器确实只能执行16个线程，IO密集型任务会出现相互等待而被阻塞。</li>
+<li>一个任务可以分解成多个独立的子任务才能让性能在并行化时有所提升</li>
 </ul>
+<h2 id="三、自动并行化"><a href="#三、自动并行化" class="headerlink" title="三、自动并行化"></a>三、自动并行化</h2><p>Java 8引入了自动并行化概念，能够让一部分Java代码自动并行方式执行，例如parrellStream。<br>Java 8为ForkJoinPool添加了一个通用线程池，用来处理没有别显示提交到任何线程池的任务，默认线程数量等于运行计算机上的处理器数量。<br>但是这样存在一个严重的问题：该池是所有并行流共享的。默认情况，fork/join池会为每个处理器分配一个线程。假设你有一台16核的机器，这样你就只能创建16个线程。对CPU密集型的任务来说，这样是有意义的，因为你的机器确实只能执行16个线程，IO密集型任务会出现相互等待而被阻塞。</p>
 
       
     </div>
@@ -542,7 +543,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、ThreadPoolExecutor"><span class="nav-number">1.</span> <span class="nav-text">一、ThreadPoolExecutor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、ForkJoinPool"><span class="nav-number">2.</span> <span class="nav-text">二、ForkJoinPool</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、ThreadPoolExecutor"><span class="nav-number">1.</span> <span class="nav-text">一、ThreadPoolExecutor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、ForkJoinPool"><span class="nav-number">2.</span> <span class="nav-text">二、ForkJoinPool</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、自动并行化"><span class="nav-number">3.</span> <span class="nav-text">三、自动并行化</span></a></li></ol></div>
             
 
           </div>
