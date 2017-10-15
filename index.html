@@ -304,7 +304,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://captainhong.com/2017/10/15/线程池/">
+    <link itemprop="mainEntityOfPage" href="http://captainhong.com/2017/10/15/First-Move/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Captain">
@@ -323,7 +323,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2017/10/15/线程池/" itemprop="url">线程池</a></h1>
+                <a class="post-title-link" href="/2017/10/15/First-Move/" itemprop="url">First Move</a></h1>
         
 
         <div class="post-meta">
@@ -335,7 +335,7 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-15T05:28:29+08:00">
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-15T20:57:20+08:00">
                 2017-10-15
               </time>
             
@@ -345,28 +345,6 @@
             
           </span>
 
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/并发编程/" itemprop="url" rel="index">
-                    <span itemprop="name">并发编程</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
           
 
           
@@ -397,26 +375,23 @@
       
         
           
-            <h2 id="ThreadPoolExecutor"><a href="#ThreadPoolExecutor" class="headerlink" title="ThreadPoolExecutor"></a>ThreadPoolExecutor</h2><p>最小线程数：当任务队列为空时，线程池中最少需要保持的线程数量，这样做是考虑创建线程时一个相对耗费资源的操作，应该尽量避免，当有新任务被投入队列时，总有线程立刻处理。<br>最大线程数：当需要处理的任务过多时，线程池能够拥有的最大线程数。这样做事为了保证不会创建过多线程，线程运行需要依赖CPU等资源，线程过多会降低性能。<br>线程池任务数量：线程池有一个列表或者队列来存放需要被执行的任务，当任务数量达到最大时再尝试增加新任务会失败。ThreadPoolExecutor有一个rejectedExecution方法来拒绝该任务。<br>定制ThreadPoolExecutor：<br>线程池同时满足以下条件就会创建一个新的线程：</p>
-<ul>
-<li>有任务需要被执行</li>
-<li>当前线程池中所有线程都处于工作状态</li>
-<li>当前线程池中线程数没有达到最大线程数</li>
-</ul>
-<p>根据任务队列种类，创建方式分为：</p>
-<ul>
-<li>SynchronousQueue: 这个队列的特点是不能放置任何任务在队列中，当有任务被提交时使用SynchronousQueue的线程池会立即为该任务创建一个线程（如果线程数量达到最大时该任务会被拒绝）。这种队列适合任务数量小的时候采用。</li>
-<li>无限队列: 例如LinkedBlockingQueue, 如何被提交的任务都不会被拒绝，线程池会忽略最大线程这一参数，意味着线程池的最大线程数就变成了设置的最小线程数。所以在使用这种队列时，通常将最大线程和最小线程设置成相等，相当于使用固定线程数量的线程池。</li>
-<li>有限队列: 例如ArrayBlockingQueue，当最小线程都在工作状态而且队列已满，线程池才会创建新线程从队列中拿走任务。</li>
-</ul>
-<h2 id="ForkJoinPool"><a href="#ForkJoinPool" class="headerlink" title="ForkJoinPool"></a>ForkJoinPool</h2><p>ForkJoinPool使用无线队列来保存要执行的任务，线程数量通过构造函数传入，如果没有向构造函数传入希望的线程数量，那么当前计算机可用的CPU数量会被设置成线程数量。<br>使用ForkJoinPool时，能够让其中的线程创建新的任务，并挂起当前任务，此时线程就能够从队列中选择子任务执行。<br>ForkJoinPool的另外一个特性是它能够实现工作窃取(Work Stealing)，在该线程池的每个线程中会维护一个队列来存放需要被执行的任务。当线程自身队列中的任务都执行完毕后，它会从别的线程中拿到未被执行的任务并帮助它执行。<br>所以一个结论就是：当任务的任务量均衡时，选择ThreadPoolExecutor往往更好(ForkJoinPool会创建子任务，导致GC工作量增加)，反之则选择ForkJoinPool。<br>另一个影响ForkJoinPool性能的因素是停止进行任务分割的阈值。<br>要把任务提交到这个池，必须创建RecursiveTask<r>的一个子类，其中R是并行化任务以及所有子任务产生的结果类型。如果不返回结果，则是RecursiveAction类型。要定义RecursiveTask，只需实现唯一的抽象方法compute()。在compute()方法中使用fork(), compute(), join()创建子任务并合并结果。fork()方法利用另一个ForkJoinPool线程异步执行新创建的子任务，join()读取子任务结果，如果尚未完成则等待。<br>使用分支/合并框架的最佳做法：</r></p>
-<ul>
-<li>对一个任务调用join方法会阻塞调用方，因此有必要在两个子任务的计算都开始之后再调用它。</li>
-<li>不应该在RecursiveTask内部使用ForkJoinPool的invoke方法，应该直接调用compute或fork方法，只有顺序代码才应该用invoke启动并行运算。</li>
-<li>fork()会用另一个线程来处理子任务，同时对左边和右边子任务调用fork()方法效率比直接对其中一个调用compute低，这样可以为其中一个子任务重用同一线程，避免线程池多分配一个任务造成的开销。</li>
-<li>一个任务可以分解成多个独立的子任务才能让性能在并行化时有所提升</li>
-</ul>
-<h2 id="自动并行化"><a href="#自动并行化" class="headerlink" title="自动并行化"></a>自动并行化</h2><p>Java 8引入了自动并行化概念，能够让一部分Java代码自动并行方式执行，例如parrellStream。<br>Java 8为ForkJoinPool添加了一个通用线程池，用来处理没有别显示提交到任何线程池的任务，默认线程数量等于运行计算机上的处理器数量。<br>但是这样存在一个严重的问题：该池是所有并行流共享的。默认情况，fork/join池会为每个处理器分配一个线程。假设你有一台16核的机器，这样你就只能创建16个线程。对CPU密集型的任务来说，这样是有意义的，因为你的机器确实只能执行16个线程，IO密集型任务会出现相互等待而被阻塞。</p>
+            <h3 id="First-Move"><a href="#First-Move" class="headerlink" title="First Move"></a>First Move</h3><blockquote>
+<p>“你没有什么话想说吗？”  — “有啊”<br>“那你为什么不说？” — “懒得说”<br>“那就写下来吧！” — “好”</p>
+<h5 id="为什么做这个博客"><a href="#为什么做这个博客" class="headerlink" title="为什么做这个博客"></a>为什么做这个博客</h5><p>不知不觉工作了快五个月了，好像每天都有汹涌的信息和新鲜事灌进脑子里，密度远远超过了大学里。我一直在被动地接受新知识的冲击，继而渐渐感到不安。我不知道这些东西在哪，我不知道我有没有抓住他们。当我看到的越多，也就越知道我没看到的更多。</p>
+</blockquote>
+<p>最近似乎独处的时间很多，其实也算不上独处，毕竟每天有超过十个小时窝在公司的椅子里。但是一天下来，好像也没怎么张过嘴。我已经慢慢学不会主动找人聊天了，似乎习惯了一个人做事，也乐得清静。这样的生活久了，也就明白了我要依靠的只有自己罢了。</p>
+<p>前段时间看了小朋友演的红楼梦，想起我曾经最迷的书就是这本。但是我现在连十二钗都记不全了。如此想来我用了两个暑假看了两遍，好像都在浪费时间了。心里觉得不甘，于是我又买了一套，当看到书名的时候，莫名觉得欣喜又感动，好像又看到了那个夏天，不写暑假作业，偷偷看“杂书”的我。</p>
+<p>这些算不上理由，也毫无逻辑。我本来也不擅长写东西，不会引经据典，条例不清晰，没有论据论点。那到底为什么要搭这个博客呢？大概是想多发现些问题，多积累点知识，以后不至于失业吧；大概是一个人呆的时间久了，想找点事儿做不至于太寂寞吧；大概是想记录下时光，给以后或许会迷茫的自己吧。可能这些原因都有，也可能都不是，我唯一真切地记得的是，昨天晚上躺在床上，脑子里有人问我有没有什么话想说，突然发现自己也有很多想法要表达。那就做个博客吧。我看看了手机，十二点半，嗯，还早着。于是就一晚上都没睡。</p>
+<hr>
+<h5 id="要记录些什么"><a href="#要记录些什么" class="headerlink" title="要记录些什么"></a>要记录些什么</h5><p>我想，这应该会是个披着技术外衣的生活类博客吧。我给这个博客取的title是dabbler，牛津词典翻译成浅尝者，说白了就是半吊子。我觉得半吊子似乎是对自己很好的诠释。我似乎还没有大牛们用技术推动世界的宏伟理想，所以我应该会花很多时间来闲扯淡吧。</p>
+<p>当然，不管怎样，至少他的外衣是技术的。不管工作中，还是私下里，值得记下来的技术问题我都想记下来，看过的书也有必要记些读书笔记。但是只谈技术未免太严肃，就好像是一个从不洗头不洗澡对着电脑敲一天代码的技术死宅一样。如果有一天看了哪本小说，我可能会记下里面几句话；如果看了哪部动漫，可能会交流二次元文化；如果出去旅游，可能会贴几张照片；如果有一天遇到另一个人，那可能就有两个人写博客了。</p>
+<p>不管怎样，我希望记录的东西不止有意义，有价值，更要有趣。至少对我来说是有趣的。以后有一天看到今天写的东西，还会笑着想那时候我可真蠢啊。</p>
+<hr>
+<h5 id="First-Move-1"><a href="#First-Move-1" class="headerlink" title="First Move"></a>First Move</h5><p>这一篇就暂告一段落了。在写这几百个字的过程中，也是对自己新的认识，我的文笔是真的差。First move是标题，也是结尾，第一篇算是个契机，第一步不只写篇博客这么肤浅。历史的车轮滚滚向前，哪有时间回头望。</p>
+<blockquote>
+<p>竹杖芒鞋轻胜马，谁怕？一蓑烟雨任平生。</p>
+</blockquote>
+<p>煮完鸡汤喝，明天又是星期一。</p>
 
           
         
@@ -505,22 +480,13 @@
           
 
           
-            
-            
-            <div class="site-state-item site-state-categories">
-              <a href="/categories/index.html">
-                <span class="site-state-item-count">1</span>
-                <span class="site-state-item-name">分类</span>
-              </a>
-            </div>
-          
 
           
             
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-count">2</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
