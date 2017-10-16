@@ -106,7 +106,7 @@
 <meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://captainhong.com/img/method.png">
 <meta property="og:image" content="http://captainhong.com/img/function.png">
-<meta property="og:updated_time" content="2017-10-16T12:56:35.000Z">
+<meta property="og:updated_time" content="2017-10-16T16:24:15.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Java 8 - Lambda">
 <meta name="twitter:description" content="基本概念从一个例子开始：用Lambda实现一个比较器 12Comparator&amp;lt;Apple&amp;gt; byWeight = 	 (Apple apple1, Apple apple2) -&amp;gt; apple1.getWeight().compareTo(apple2.getWeight()); Lambda表达式有三个部分：  参数列表：两个Apple 箭头：箭头把参数列表和Lambda主体">
@@ -473,6 +473,9 @@
 <p><img src="/img/function.png" alt="复合Function"></p>
 <p>Function接口提供了andThen和compose两个默认方法，andThen相当于 multiply(add(x))，compose相当于 add(multiply(x))。<br>所以上面程序的结果是：4和3。<br>很多函数式接口都有默认方法来结合Lambda表达式复合成更复杂的表达式。</p>
 <h5 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h5><p>Lambda表达式可以理解为一种匿名函数，只有在接受函数式接口的地方才可以使用lambda表达式，它允许直接内联，为函数式接口的抽象方法提供实现，<font color="blue">并且将整个表达式作为函数式接口的一个实例。</font></p>
+<blockquote>
+<p>参考：<br>《Java 8函数式编程》– Richard Warburton<br>《Java 8 in Action》– Raoul-Gabriel Urma, Mario Fusco, Alan Mycroft</p>
+</blockquote>
 
       
     </div>
