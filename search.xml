@@ -1,184 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<search> 
-  
-    
-    <entry>
-      <title><![CDATA[关于《龙族》]]></title>
-      <url>/2017/10/17/%E5%85%B3%E4%BA%8E%E3%80%8A%E9%BE%99%E6%97%8F%E3%80%8B/</url>
-      <content type="html"><![CDATA[<p>晚上刷微博，看到《上海堡垒》要拍电影了。我心里一惊，想来江南是要忙着做编剧去了，龙五又是遥遥无期了。</p>
-<p>关于《龙族》，不得不吐槽江南。我还从来没见过一个作家能像南大这样拖稿的，当然，他的主业太多，没时间搞写作的副业。我从大一上学期开始追海贼，下学期开始追妖尾，然而龙族是从高二开始追的。今年妖尾完结了，龙五还不知道什么时候能见到。</p>
-<p>高中的时候课余时间很少，一周只有半天假，我还是磕磕绊绊的追了两本。因为看了龙族，后来陆续也看了《此间的少年》和《九州缥缈录》，但是都没能像龙族这样让我钟意。龙族确实很特别，很难定义这到底是部什么类型的小说。为什么会追这样一部小说？主角又衰又懦弱，喜欢同班的女孩却被当众戏弄，看起来并不酣畅淋漓，正是这时候，诺诺推门而入，四下扫视，目光如刀，牵起这个衰仔，高傲地从人群中带走他。</p>
-<blockquote>
-<p>人一生里总有几次觉得自己看见了天堂之门洞开，路明非等了十八年，在他最衰的那一刻，门开了。</p>
-</blockquote>
-<p>我承认最开始让我看下去的动力是开着红色法拉利，骄傲又耀眼的诺诺，不是路明非。</p>
-<p>看龙族的女生可能有超过三分之一喜欢凯撒，多金又帅气，霸道又温柔，明明众星捧月却偏偏又专一，完美得没有一丝破绽。应该还有超过三分之一喜欢楚子航，沉默，冷静，仗义，强得离谱。剩下的大概也没有多少喜欢路明非，因为他确实从头衰到脚。<br>然而路明非才是大部分人的样子。有想做的事儿，想保护的人，但是他实在太衰了，只能窝在角落里，呆呆地看着聚光灯下的凯撒牵着诺诺的手，还要嘟囔着学姐你要幸福这样的烂话</p>
-<blockquote>
-<p>最孤单的人分两种，一种恨不得全世界都跟他一样倒霉，一种则希望别人能幸福，因为看到幸福的人，他也略略觉得温暖。</p>
-</blockquote>
-<p>他就是这样衰的人，衰到全然忘记是自己在三峡的江底豁出了命救下了诺诺，是自己卖掉灵魂斩了龙王。他做了想做的事，保护了要保护的人，站在聚光灯下的依然不是他，所以他认了命，以为自己只能是个衰人。<br>我一直在等着路明非撕掉懦弱的面具，穿越荒原，竖起战旗，哪怕失去灵魂，背叛世界，也应该拿回自己的东西。但是直到第四部之前，他都还是唯唯诺诺的衰仔。</p>
-]]></content>
-      
-        <categories>
-            
-            <category> -小说 </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> -小说 -龙族 </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[Java 8 - Lambda]]></title>
-      <url>/2017/10/16/Java-8-Lambda/</url>
-      <content type="html"><![CDATA[<h4 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h4><p>从一个例子开始：用Lambda实现一个比较器</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Comparator&lt;Apple&gt; byWeight = </div><div class="line">   (Apple apple1, Apple apple2) -&gt; apple1.getWeight().compareTo(apple2.getWeight());</div></pre></td></tr></table></figure>
-<p>Lambda表达式有三个部分：</p>
-<ul>
-<li>参数列表：两个Apple</li>
-<li>箭头：箭头把参数列表和Lambda主体分隔开</li>
-<li>Lambda主体：比较两个Apple的重量。表达式就是Lambda的返回值</li>
-</ul>
-<p>Lambda表达式的基本语法有两种：</p>
-<ul>
-<li>(parameters) -&gt; expression</li>
-<li>(parameters) -&gt; {statements;}</li>
-</ul>
-<p>注：expression隐含了return，如果想显示返回语句需要使用第二种statements语法。</p>
-<hr>
-<h4 id="何时使用Lambda"><a href="#何时使用Lambda" class="headerlink" title="何时使用Lambda"></a>何时使用Lambda</h4><p>我们可以在函数式接口上使用Lambda表达式。<br>函数式接口：只定义一个抽象方法的接口(比如例子中的Comparator接口只定义了一个compare()抽象方法)。<br>注：<font color="blue">Java 8中新增了默认方法，即在类没有对方法进行实现时，主体为方法提供默认实现的方法。</font>不管有多少默认方法，只要接口只定义了一个抽象方法，它就仍然是一个函数式接口。</p>
-<hr>
-<h4 id="函数式接口"><a href="#函数式接口" class="headerlink" title="函数式接口"></a>函数式接口</h4><p>函数式接口很有用，因为抽象方法的签名可以描述Lambda表达式的签名，函数式接口的抽象方法签名称为函数描述符。<br>java.util.function包中定义了一些常用的函数式接口：<br>(注：@FunctionalInterface 注解用于表示该接口会设计成一个函数式接口。接口代码省略了默认方法)。</p>
-<h5 id="1-Predicate"><a href="#1-Predicate" class="headerlink" title="1) Predicate"></a>1) Predicate<t></t></h5><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@FunctionalInterface</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Predicate</span>&lt;<span class="title">T</span>&gt; </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">boolean</span> <span class="title">test</span><span class="params">(T t)</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>Predicate接口定义了一个test抽象方法，接受泛型T对象，返回一个boolean。适用于filter中。</p>
-<h5 id="2-Consumer"><a href="#2-Consumer" class="headerlink" title="2) Consumer"></a>2) Consumer<t></t></h5><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@FunctionalInterface</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Consumer</span>&lt;<span class="title">T</span>&gt; </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">accept</span><span class="params">(T t)</span></span>;</div><div class="line">&#125;    </div></pre></td></tr></table></figure>
-<p>Consumer定义了一个accept抽象方法，接受泛型T对象，没有返回。如果需要访问一个对象并对其执行某些操作就可以使用这个接口。</p>
-<h5 id="3-Function"><a href="#3-Function" class="headerlink" title="3) Function"></a>3) Function<t, r=""></t,></h5><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@FunctionalInterface</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Function</span>&lt;<span class="title">T</span>, <span class="title">R</span>&gt; </span>&#123;</div><div class="line">    <span class="function">R <span class="title">apply</span><span class="params">(T t)</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>Function接口定义了apply方法，接受泛型T对象，返回泛型R对象。适用于map方法中。</p>
-<h5 id="4-其他函数式接口"><a href="#4-其他函数式接口" class="headerlink" title="4) 其他函数式接口"></a>4) 其他函数式接口</h5><table>
-<thead>
-<tr>
-<th>函数式接口</th>
-<th>抽象方法</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>BiConsumer&lt;T, U&gt;</td>
-<td>void accept(T t, U u)</td>
-</tr>
-<tr>
-<td>BiFunction&lt;T, U, R&gt;</td>
-<td>R apply(T t, U u)</td>
-</tr>
-<tr>
-<td>BinaryOperator&lt;T&gt; extends BiFunction&lt;T,T,T&gt;</td>
-<td>T apply(T t1, T t2)</td>
-</tr>
-<tr>
-<td>BiPredicate&lt;T, U&gt;</td>
-<td>boolean test(T t, U u)</td>
-</tr>
-<tr>
-<td>Supplier&lt;T&gt;</td>
-<td>T get()</td>
-</tr>
-<tr>
-<td>UnaryOperator&lt;T&gt; extends Function<t, t=""></t,></td>
-<td>T apply(T t)</td>
-</tr>
-</tbody>
-</table>
-<h5 id="5-原始类型特化"><a href="#5-原始类型特化" class="headerlink" title="5) 原始类型特化"></a>5) 原始类型特化</h5><p>上述函数式接口的抽象方法都使用了泛型，泛型只能绑定引用类型，那么在输入输出是原始类型时会进行自动装箱，影响性能。 java.util.function中提供了专门的函数式接口避免装箱操作。<br>比如:</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@FunctionalInterface</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">IntPredicate</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">boolean</span> <span class="title">test</span><span class="params">(<span class="keyword">int</span> value)</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>    
-<p>如何使用它：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">IntPredicate evenNumbers = (<span class="keyword">int</span> i) -&gt; i% <span class="number">2</span> == <span class="number">0</span>;</div><div class="line">evenNumbers.test(<span class="number">1000</span>);</div></pre></td></tr></table></figure><br>使用IntPredicate不会对1000装箱，如果用Predicate&lt;Integer&gt;会把1000装到Integer对象中。<br>之前提到的函数式接口都有很多对应的类型特化接口，具体可在java.util.function包中查看。</p>
-<hr>
-<h4 id="方法引用"><a href="#方法引用" class="headerlink" title="方法引用"></a>方法引用</h4><p>方法引用可以看做仅仅调用特定方法的Lambda的一种快捷写法，语法糖。<br>构建方法引用：</p>
-<ul>
-<li>指向静态方法的方法引用：例如Integer的parseInt方法，可以写作Integer:parseInt</li>
-<li>指向任意类型实例方法的方法引用：例如String的length方法，写作String::length</li>
-<li>指向现有对象的实例方法的方法引用：与第二种的区别是第二种是在引用一个对象的方法，而这个对象本身是Lambda的一个参数，第三种方法引用指在Lambda中调用一个已存在的外部对象的方法</li>
-</ul>
-<p><img src="/img/method.png" alt="方法引用"></p>
-<hr>
-<h4 id="复合Lambda表达式"><a href="#复合Lambda表达式" class="headerlink" title="复合Lambda表达式"></a>复合Lambda表达式</h4><p>多个简单的Lambda表达式可以复合成复杂的表达式，比如让两个Predicate做or操作，或者一个Function的输出作为另一个Function的输入。但是函数式接口只有一个抽象方法，实现复合操作的是前面提到的默认方法。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@FunctionalInterface</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Predicate</span>&lt;<span class="title">T</span>&gt; </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">default</span> Predicate&lt;T&gt; <span class="title">and</span><span class="params">(Predicate&lt;? <span class="keyword">super</span> T&gt; other)</span> </span>&#123;</div><div class="line">    	Objects.requireNonNull(other);</div><div class="line">	    <span class="keyword">return</span> (t) -&gt; test(t) &amp;&amp; other.test(t);</div><div class="line">    &#125;</div><div class="line">  </div><div class="line">    <span class="function"><span class="keyword">default</span> Predicate&lt;T&gt; <span class="title">negate</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> (t) -&gt; !test(t);&#125;</div><div class="line">  </div><div class="line">    <span class="function"><span class="keyword">default</span> Predicate&lt;T&gt; <span class="title">or</span><span class="params">(Predicate&lt;? <span class="keyword">super</span> T&gt; other)</span> </span>&#123;</div><div class="line">	    Objects.requireNonNull(other);</div><div class="line">	    <span class="keyword">return</span> (t) -&gt; test(t) || other.test(t);</div><div class="line">    &#125;    </div><div class="line">&#125;    </div></pre></td></tr></table></figure>
-<p>Predicate接口除了唯一抽象方法外，还有三个默认方法，negate，and和or，可以重用已有的Predicate来创建更复杂的谓词。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//苹果是红的</span></div><div class="line">Predicate&lt;Apple&gt; redApple = apple -&gt; <span class="string">"red"</span>.equals(apple.getColor());  </div><div class="line"><span class="comment">//苹果不是红的</span></div><div class="line">Predicate&lt;Apple&gt; notRedApple = redApple.negate();  </div><div class="line"><span class="comment">//苹果是红色又比100克重           </span></div><div class="line">Predicate&lt;Apple&gt; redAndHeavyApple = redApple.and(apple -&gt; apple.getWeight() &gt; <span class="number">100</span>);</div><div class="line"><span class="comment">//苹果是比100克重的红苹果，或者是绿苹果  </span></div><div class="line">Predicate&lt;Apple&gt; redAndHeavyAppleOrGreen = </div><div class="line">    redApple.and(apple -&gt; apple.getWeight() &gt; <span class="number">100</span>)</div><div class="line">            .or(apple -&gt; <span class="string">"Green"</span>.equals(apple.getColor()));</div></pre></td></tr></table></figure>
-<p>一个复合Function的例子：</p>
-<p><img src="/img/function.png" alt="复合Function"></p>
-<p>Function接口提供了andThen和compose两个默认方法，andThen相当于 multiply(add(x))，compose相当于 add(multiply(x))。<br>所以上面程序的结果是：4和3。<br>很多函数式接口都有默认方法来结合Lambda表达式复合成更复杂的表达式。</p>
-<hr>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>Lambda表达式可以理解为一种匿名函数，只有在接受函数式接口的地方才可以使用lambda表达式，它允许直接内联，为函数式接口的抽象方法提供实现，<font color="blue">并且将整个表达式作为函数式接口的一个实例。</font></p>
-<blockquote>
-<p>参考：<br>《Java 8函数式编程》– Richard Warburton<br>《Java 8 in Action》– Raoul-Gabriel Urma, Mario Fusco, Alan Mycroft</p>
-</blockquote>
-]]></content>
-      
-        <categories>
-            
-            <category> Java </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> Java </tag>
-            
-            <tag> Java 8 </tag>
-            
-            <tag> Lambda </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[First Move]]></title>
-      <url>/2017/10/15/First-Move/</url>
-      <content type="html"><![CDATA[<blockquote>
-<p>“你没有什么话想说吗？”  — “有啊”<br>“为什么不说？” — “懒得说”<br>“那就写下来”</p>
-</blockquote>
-<h4 id="为什么做这个博客"><a href="#为什么做这个博客" class="headerlink" title="为什么做这个博客"></a>为什么做这个博客</h4><p>不知不觉工作了快五个月了，好像每天都有汹涌的信息和新鲜事灌进脑子里，密度远远超过了大学里。我一直在被动地接受新知识的冲击，继而渐渐感到不安。我不知道这些东西在哪，我不知道我有没有抓住他们。当我看到的越多，也就越知道我没看到的更多。</p>
-<p>最近似乎独处的时间很多，其实也算不上独处，毕竟每天有超过十个小时窝在公司的椅子里。但是一天下来，好像也没怎么张过嘴。我已经慢慢学不会主动找人说话了，似乎习惯了一个人做事，也乐得清静。这样的生活久了，也就明白了我要依靠的只有自己罢了。</p>
-<p>前段时间看了小朋友演的红楼梦，想起我曾经最迷的书就是这本。但是我现在连十二钗都记不全了。如此想来我用了两个暑假看了两遍，好像都在浪费时间了。心里觉得不甘，于是就又买了一套，当看到封面的时候，莫名觉得欣喜又感动，好像又看到了那个夏天，不写暑假作业，偷偷看“杂书”的我。</p>
-<p>这些算不上什么理由，也毫无逻辑。我本来也不擅长写东西，不会引经据典，条理不清晰，没有论据论点。那到底为什么要搭这个博客呢？大概是想发现些问题，积累点知识，以后不至于失业吧；大概是一个人呆的时间久了，想做点有意思的事不至于太寂寞吧；大概是想记录下时光，给以后或许会迷茫的自己吧。可能这些原因都有，也可能都不是，我唯一真切地记得的是，昨天晚上躺在床上，脑子里有声音问我有没有什么话想说，突然发现自己也有很多想法要表达。那就做个博客吧。我看了看手机，十二点半，嗯，还早着。于是就一晚上都没睡。</p>
-<hr>
-<h4 id="要记录些什么"><a href="#要记录些什么" class="headerlink" title="要记录些什么"></a>要记录些什么</h4><p>我想，这应该会是个披着技术外衣的生活类博客吧。我给这个博客定的title是dabbler，牛津词典翻译成浅尝者，说白了就是半吊子。我觉得半吊子似乎是对自己很好的诠释。我好像还没有大牛们用技术推动世界的宏伟理想，所以应该会花很多时间来闲扯淡。</p>
-<p>当然，不管怎样，至少他应该要穿着那件外衣的。不管工作中还是私下里，遇到的技术问题都值得记下来，看过的书也有必要做些笔记。但是只谈技术未免太严肃，就好像是一个从不洗头不洗澡对着电脑敲一天代码的死宅一样。如果有一天看了哪本小说，可能会记下里面几句话；如果看了哪部动漫，可能会交流二次元文化；如果出去旅游，可能会贴几张照片；如果有一天我遇到另一个人，那可能就有两个人写博客了。</p>
-<p>不管怎样，我希望记录的东西不止有意义，有价值，更要有趣。至少对我来说是有趣的。以后有一天看到今天写的东西，还会笑着想那时候我可真蠢啊。</p>
-<hr>
-<h4 id="First-Move"><a href="#First-Move" class="headerlink" title="First Move"></a>First Move</h4><p>这一篇就暂告一段落了。在写这几百个字的过程中，也算是重新认识自己，我的文笔是真的差。<br>First move是标题，也是结尾，第一篇算是个契机，第一步也不只写篇博客这么肤浅。历史的车轮滚滚向前，哪有时间停滞不前。</p>
-<blockquote>
-<p>竹杖芒鞋轻胜马，谁怕？一蓑烟雨任平生。</p>
-</blockquote>
-<p>煮碗鸡汤喝，明天又是星期一。</p>
-]]></content>
-      
-        <categories>
-            
-            <category> 随笔 </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> 生活 </tag>
-            
-            <tag> 随笔 </tag>
-            
-        </tags>
-        
-    </entry>
-    
-  
-  
+<search>
+  <entry>
+    <title><![CDATA[关于《龙族》]]></title>
+    <url>%2F2017%2F10%2F17%2F%E5%85%B3%E4%BA%8E%E3%80%8A%E9%BE%99%E6%97%8F%E3%80%8B%2F</url>
+    <content type="text"><![CDATA[晚上刷微博，看到《上海堡垒》要拍电影了。我心里一惊，想来江南是要忙着做编剧去了，龙五又是遥遥无期了。 关于《龙族》，不得不吐槽江南。我还从来没见过一个作家能像南大这样拖稿的，当然，他的主业太多，没时间搞写作的副业。我从大一上学期开始追海贼，下学期开始追妖尾，然而龙族是从高二开始追的。今年妖尾完结了，龙五还不知道什么时候能见到。 高中的时候课余时间很少，一周只有半天假，我还是磕磕绊绊的追了两本。因为看了龙族，后来陆续也看了《此间的少年》和《九州缥缈录》，但是都没能像龙族这样让我钟意。龙族确实很特别，很难定义这到底是部什么类型的小说。为什么会追这样一部小说？主角又衰又懦弱，喜欢同班的女孩却被当众戏弄，看起来并不酣畅淋漓，正是这时候，诺诺推门而入，四下扫视，目光如刀，牵起这个衰仔，高傲地从人群中带走他。 人一生里总有几次觉得自己看见了天堂之门洞开，路明非等了十八年，在他最衰的那一刻，门开了。 我承认最开始让我看下去的动力是开着红色法拉利，骄傲又耀眼的诺诺，不是路明非。 看龙族的女生可能有超过三分之一喜欢凯撒，多金又帅气，霸道又温柔，明明众星捧月却偏偏又专一，完美得没有一丝破绽。应该还有超过三分之一喜欢楚子航，沉默，冷静，仗义，强得离谱。剩下的大概也没有多少喜欢路明非，因为他确实从头衰到脚。然而路明非才是大部分人的样子。有想做的事儿，想保护的人，但是他实在太衰了，只能窝在角落里，呆呆地看着聚光灯下的凯撒牵着诺诺的手，还要嘟囔着学姐你要幸福这样的烂话 最孤单的人分两种，一种恨不得全世界都跟他一样倒霉，一种则希望别人能幸福，因为看到幸福的人，他也略略觉得温暖。 他就是这样衰的人，衰到全然忘记是自己在三峡的江底豁出了命救下了诺诺，是自己卖掉灵魂斩了龙王。他做了想做的事，保护了要保护的人，站在聚光灯下的依然不是他，所以他认了命，以为自己只能是个衰人。我一直在等着路明非撕掉懦弱的面具，穿越荒原，竖起战旗，哪怕失去灵魂，背叛世界，也应该拿回自己的东西。好像路明非化身黑龙睥睨天下，自己也能获得重生一样。但是直到第四部之前，他都还是唯唯诺诺的衰仔。]]></content>
+      <categories>
+        <category>-小说</category>
+      </categories>
+      <tags>
+        <tag>-小说 -龙族</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[Java 8 - Lambda]]></title>
+    <url>%2F2017%2F10%2F16%2FJava-8-Lambda%2F</url>
+    <content type="text"><![CDATA[基本概念从一个例子开始：用Lambda实现一个比较器 12Comparator&lt;Apple&gt; byWeight = (Apple apple1, Apple apple2) -&gt; apple1.getWeight().compareTo(apple2.getWeight()); Lambda表达式有三个部分： 参数列表：两个Apple 箭头：箭头把参数列表和Lambda主体分隔开 Lambda主体：比较两个Apple的重量。表达式就是Lambda的返回值 Lambda表达式的基本语法有两种： (parameters) -&gt; expression (parameters) -&gt; {statements;} 注：expression隐含了return，如果想显示返回语句需要使用第二种statements语法。 何时使用Lambda我们可以在函数式接口上使用Lambda表达式。函数式接口：只定义一个抽象方法的接口(比如例子中的Comparator接口只定义了一个compare()抽象方法)。注：Java 8中新增了默认方法，即在类没有对方法进行实现时，主体为方法提供默认实现的方法。不管有多少默认方法，只要接口只定义了一个抽象方法，它就仍然是一个函数式接口。 函数式接口函数式接口很有用，因为抽象方法的签名可以描述Lambda表达式的签名，函数式接口的抽象方法签名称为函数描述符。java.util.function包中定义了一些常用的函数式接口：(注：@FunctionalInterface 注解用于表示该接口会设计成一个函数式接口。接口代码省略了默认方法)。 1) Predicate1234@FunctionalInterfacepublic interface Predicate&lt;T&gt; &#123; boolean test(T t);&#125; Predicate接口定义了一个test抽象方法，接受泛型T对象，返回一个boolean。适用于filter中。 2) Consumer1234@FunctionalInterfacepublic interface Consumer&lt;T&gt; &#123; void accept(T t);&#125; Consumer定义了一个accept抽象方法，接受泛型T对象，没有返回。如果需要访问一个对象并对其执行某些操作就可以使用这个接口。 3) Function1234@FunctionalInterfacepublic interface Function&lt;T, R&gt; &#123; R apply(T t);&#125; Function接口定义了apply方法，接受泛型T对象，返回泛型R对象。适用于map方法中。 4) 其他函数式接口 函数式接口 抽象方法 BiConsumer&lt;T, U&gt; void accept(T t, U u) BiFunction&lt;T, U, R&gt; R apply(T t, U u) BinaryOperator&lt;T&gt; extends BiFunction&lt;T,T,T&gt; T apply(T t1, T t2) BiPredicate&lt;T, U&gt; boolean test(T t, U u) Supplier&lt;T&gt; T get() UnaryOperator&lt;T&gt; extends Function T apply(T t) 5) 原始类型特化上述函数式接口的抽象方法都使用了泛型，泛型只能绑定引用类型，那么在输入输出是原始类型时会进行自动装箱，影响性能。 java.util.function中提供了专门的函数式接口避免装箱操作。比如: 1234@FunctionalInterfacepublic interface IntPredicate &#123; boolean test(int value);&#125; 如何使用它：12IntPredicate evenNumbers = (int i) -&gt; i% 2 == 0;evenNumbers.test(1000);使用IntPredicate不会对1000装箱，如果用Predicate&lt;Integer&gt;会把1000装到Integer对象中。之前提到的函数式接口都有很多对应的类型特化接口，具体可在java.util.function包中查看。 方法引用方法引用可以看做仅仅调用特定方法的Lambda的一种快捷写法，语法糖。构建方法引用： 指向静态方法的方法引用：例如Integer的parseInt方法，可以写作Integer:parseInt 指向任意类型实例方法的方法引用：例如String的length方法，写作String::length 指向现有对象的实例方法的方法引用：与第二种的区别是第二种是在引用一个对象的方法，而这个对象本身是Lambda的一个参数，第三种方法引用指在Lambda中调用一个已存在的外部对象的方法 复合Lambda表达式多个简单的Lambda表达式可以复合成复杂的表达式，比如让两个Predicate做or操作，或者一个Function的输出作为另一个Function的输入。但是函数式接口只有一个抽象方法，实现复合操作的是前面提到的默认方法。 123456789101112131415@FunctionalInterfacepublic interface Predicate&lt;T&gt; &#123; default Predicate&lt;T&gt; and(Predicate&lt;? super T&gt; other) &#123; Objects.requireNonNull(other); return (t) -&gt; test(t) &amp;&amp; other.test(t); &#125; default Predicate&lt;T&gt; negate() &#123; return (t) -&gt; !test(t);&#125; default Predicate&lt;T&gt; or(Predicate&lt;? super T&gt; other) &#123; Objects.requireNonNull(other); return (t) -&gt; test(t) || other.test(t); &#125; &#125; Predicate接口除了唯一抽象方法外，还有三个默认方法，negate，and和or，可以重用已有的Predicate来创建更复杂的谓词。 12345678910//苹果是红的Predicate&lt;Apple&gt; redApple = apple -&gt; "red".equals(apple.getColor()); //苹果不是红的Predicate&lt;Apple&gt; notRedApple = redApple.negate(); //苹果是红色又比100克重 Predicate&lt;Apple&gt; redAndHeavyApple = redApple.and(apple -&gt; apple.getWeight() &gt; 100);//苹果是比100克重的红苹果，或者是绿苹果 Predicate&lt;Apple&gt; redAndHeavyAppleOrGreen = redApple.and(apple -&gt; apple.getWeight() &gt; 100) .or(apple -&gt; "Green".equals(apple.getColor())); 一个复合Function的例子： Function接口提供了andThen和compose两个默认方法，andThen相当于 multiply(add(x))，compose相当于 add(multiply(x))。所以上面程序的结果是：4和3。很多函数式接口都有默认方法来结合Lambda表达式复合成更复杂的表达式。 总结Lambda表达式可以理解为一种匿名函数，只有在接受函数式接口的地方才可以使用lambda表达式，它允许直接内联，为函数式接口的抽象方法提供实现，并且将整个表达式作为函数式接口的一个实例。 参考：《Java 8函数式编程》– Richard Warburton《Java 8 in Action》– Raoul-Gabriel Urma, Mario Fusco, Alan Mycroft]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>Java 8</tag>
+        <tag>Lambda</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[First Move]]></title>
+    <url>%2F2017%2F10%2F15%2FFirst-Move%2F</url>
+    <content type="text"><![CDATA[“你没有什么话想说吗？” — “有啊”“为什么不说？” — “懒得说”“那就写下来” 为什么做这个博客不知不觉工作了快五个月了，好像每天都有汹涌的信息和新鲜事灌进脑子里，密度远远超过了大学里。我一直在被动地接受新知识的冲击，继而渐渐感到不安。我不知道这些东西在哪，我不知道我有没有抓住他们。当我看到的越多，也就越知道我没看到的更多。 最近似乎独处的时间很多，其实也算不上独处，毕竟每天有超过十个小时窝在公司的椅子里。但是一天下来，好像也没怎么张过嘴。我已经慢慢学不会主动找人说话了，似乎习惯了一个人做事，也乐得清静。这样的生活久了，也就明白了我要依靠的只有自己罢了。 前段时间看了小朋友演的红楼梦，想起我曾经最迷的书就是这本。但是我现在连十二钗都记不全了。如此想来我用了两个暑假看了两遍，好像都在浪费时间了。心里觉得不甘，于是就又买了一套，当看到封面的时候，莫名觉得欣喜又感动，好像又看到了那个夏天，不写暑假作业，偷偷看“杂书”的我。 这些算不上什么理由，也毫无逻辑。我本来也不擅长写东西，不会引经据典，条理不清晰，没有论据论点。那到底为什么要搭这个博客呢？大概是想发现些问题，积累点知识，以后不至于失业吧；大概是一个人呆的时间久了，想做点有意思的事不至于太寂寞吧；大概是想记录下时光，给以后或许会迷茫的自己吧。可能这些原因都有，也可能都不是，我唯一真切地记得的是，昨天晚上躺在床上，脑子里有声音问我有没有什么话想说，突然发现自己也有很多想法要表达。那就做个博客吧。我看了看手机，十二点半，嗯，还早着。于是就一晚上都没睡。 要记录些什么我想，这应该会是个披着技术外衣的生活类博客吧。我给这个博客定的title是dabbler，牛津词典翻译成浅尝者，说白了就是半吊子。我觉得半吊子似乎是对自己很好的诠释。我好像还没有大牛们用技术推动世界的宏伟理想，所以应该会花很多时间来闲扯淡。 当然，不管怎样，至少他应该要穿着那件外衣的。不管工作中还是私下里，遇到的技术问题都值得记下来，看过的书也有必要做些笔记。但是只谈技术未免太严肃，就好像是一个从不洗头不洗澡对着电脑敲一天代码的死宅一样。如果有一天看了哪本小说，可能会记下里面几句话；如果看了哪部动漫，可能会交流二次元文化；如果出去旅游，可能会贴几张照片；如果有一天我遇到另一个人，那可能就有两个人写博客了。 不管怎样，我希望记录的东西不止有意义，有价值，更要有趣。至少对我来说是有趣的。以后有一天看到今天写的东西，还会笑着想那时候我可真蠢啊。 First Move这一篇就暂告一段落了。在写这几百个字的过程中，也算是重新认识自己，我的文笔是真的差。First move是标题，也是结尾，第一篇算是个契机，第一步也不只写篇博客这么肤浅。历史的车轮滚滚向前，哪有时间停滞不前。 竹杖芒鞋轻胜马，谁怕？一蓑烟雨任平生。 煮碗鸡汤喝，明天又是星期一。]]></content>
+      <categories>
+        <category>随笔</category>
+      </categories>
+      <tags>
+        <tag>生活</tag>
+        <tag>随笔</tag>
+      </tags>
+  </entry>
 </search>
