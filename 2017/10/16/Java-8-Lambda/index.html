@@ -104,13 +104,13 @@
 <meta property="og:site_name" content="Dabbler">
 <meta property="og:description" content="基本概念从一个例子开始：用Lambda实现一个比较器 12Comparator&amp;lt;Apple&amp;gt; byWeight = 	 (Apple apple1, Apple apple2) -&amp;gt; apple1.getWeight().compareTo(apple2.getWeight()); Lambda表达式有三个部分：  参数列表：两个Apple 箭头：箭头把参数列表和Lambda主体">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://captainhong.com/2017/10/16/Java-8-Lambda/%22img/function.png%22">
-<meta property="og:image" content="http://captainhong.com/2017/10/16/Java-8-Lambda/%22img/method.png%22">
-<meta property="og:updated_time" content="2017-10-16T12:32:06.000Z">
+<meta property="og:image" content="http://captainhong.com/2017/10/16/Java-8-Lambda/img/function.png">
+<meta property="og:image" content="http://captainhong.com/2017/10/16/Java-8-Lambda/img/method.png">
+<meta property="og:updated_time" content="2017-10-16T12:37:34.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Java 8 - Lambda">
 <meta name="twitter:description" content="基本概念从一个例子开始：用Lambda实现一个比较器 12Comparator&amp;lt;Apple&amp;gt; byWeight = 	 (Apple apple1, Apple apple2) -&amp;gt; apple1.getWeight().compareTo(apple2.getWeight()); Lambda表达式有三个部分：  参数列表：两个Apple 箭头：箭头把参数列表和Lambda主体">
-<meta name="twitter:image" content="http://captainhong.com/2017/10/16/Java-8-Lambda/%22img/function.png%22">
+<meta name="twitter:image" content="http://captainhong.com/2017/10/16/Java-8-Lambda/img/function.png">
 
 
 
@@ -464,13 +464,13 @@
 <li>指向任意类型实例方法的方法引用：例如String的length方法，写作String::length</li>
 <li>指向现有对象的实例方法的方法引用：与第二种的区别是第二种是在引用一个对象的方法，而这个对象本身是Lambda的一个参数，第三种方法引用指在Lambda中调用一个已存在的外部对象的方法</li>
 </ul>
-<p><img src="&quot;img/function.png&quot;" alt="&quot;方法引用&quot;"></p>
+<p><img src="img/function.png" alt="方法引用"></p>
 <h4 id="复合Lambda表达式"><a href="#复合Lambda表达式" class="headerlink" title="复合Lambda表达式"></a>复合Lambda表达式</h4><p>多个简单的Lambda表达式可以复合成复杂的表达式，比如让两个Predicate做or操作，或者一个Function的输出作为另一个Function的输入。但是函数式接口只有一个抽象方法，实现复合操作的是前面提到的默认方法。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@FunctionalInterface</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Predicate</span>&lt;<span class="title">T</span>&gt; </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">default</span> Predicate&lt;T&gt; <span class="title">and</span><span class="params">(Predicate&lt;? <span class="keyword">super</span> T&gt; other)</span> </span>&#123;</div><div class="line">    	Objects.requireNonNull(other);</div><div class="line">	    <span class="keyword">return</span> (t) -&gt; test(t) &amp;&amp; other.test(t);</div><div class="line">    &#125;</div><div class="line">  </div><div class="line">    <span class="function"><span class="keyword">default</span> Predicate&lt;T&gt; <span class="title">negate</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> (t) -&gt; !test(t);&#125;</div><div class="line">  </div><div class="line">    <span class="function"><span class="keyword">default</span> Predicate&lt;T&gt; <span class="title">or</span><span class="params">(Predicate&lt;? <span class="keyword">super</span> T&gt; other)</span> </span>&#123;</div><div class="line">	    Objects.requireNonNull(other);</div><div class="line">	    <span class="keyword">return</span> (t) -&gt; test(t) || other.test(t);</div><div class="line">    &#125;    </div><div class="line">&#125;    </div></pre></td></tr></table></figure>
 <p>Predicate接口除了唯一抽象方法外，还有三个默认方法，negate，and和or，可以重用已有的Predicate来创建更复杂的谓词。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//苹果是红的</span></div><div class="line">Predicate&lt;Apple&gt; redApple = apple -&gt; <span class="string">"red"</span>.equals(apple.getColor());  </div><div class="line"><span class="comment">//苹果不是红的</span></div><div class="line">Predicate&lt;Apple&gt; notRedApple = redApple.negate();  </div><div class="line"><span class="comment">//苹果是红色又比100克重           </span></div><div class="line">Predicate&lt;Apple&gt; redAndHeavyApple = redApple.and(apple -&gt; apple.getWeight() &gt; <span class="number">100</span>);</div><div class="line"><span class="comment">//苹果是比100克重的红苹果，或者是绿苹果  </span></div><div class="line">Predicate&lt;Apple&gt; redAndHeavyAppleOrGreen = redApple.and(apple -&gt; apple.getWeight() &gt; <span class="number">100</span>).or(apple -&gt; <span class="string">"Green"</span>.equals(apple.getColor()));</div></pre></td></tr></table></figure>
 <p>一个复合Function的例子：</p>
-<p><img src="&quot;img/method.png&quot;" alt="&quot;复合Function&quot;"></p>
+<p><img src="img/method.png" alt="复合Function"></p>
 <p>Function接口提供了andThen和compose两个默认方法，andThen相当于 multiply(add(x))，compose相当于 add(multiply(x))。<br>所以上面程序的结果是：4和3。<br>很多函数式接口都有默认方法来结合Lambda表达式复合成更复杂的表达式。</p>
 <h5 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h5><p>Lambda表达式可以理解为一种匿名函数，只有在接受函数式接口的地方才可以使用lambda表达式，它允许直接内联，为函数式接口的抽象方法提供实现，<font color="blue">并且将整个表达式作为函数式接口的一个实例。</font></p>
 
