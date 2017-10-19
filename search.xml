@@ -1,309 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<search> 
-  
-    
-    <entry>
-      <title><![CDATA[Java 8 - CompletableFuture]]></title>
-      <url>/2017/10/18/Java-8-CompletableFuture/</url>
-      <content type="html"><![CDATA[<h4 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h4><p>Java 8新增了CompletableFuture类，和stream类似，CompletableFuture也使用了Lambda表达式以及流水线思想，从这个角度来说CompletableFuture和Future的关系就跟Stream和Collection一样。<br>既然CompletableFuture和Stream在设计上有相似之处，而且stream提供了并行流，不妨先从比较两者的关系入手。<br>CompletableFuture类提供了大量精巧的工厂方法，使用这些方法能更容易地完成整个流程：先看其中一个工厂方法的两个版本：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> &lt;U&gt; <span class="function">CompletableFuture&lt;U&gt; <span class="title">supplyAsync</span><span class="params">(Supplier&lt;U&gt; supplier)</span></span>;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> &lt;U&gt; <span class="function">CompletableFuture&lt;U&gt; <span class="title">supplyAsync</span><span class="params">(Supplier&lt;U&gt; supplier, Executor executor)</span></span>;</div></pre></td></tr></table></figure><br>supplyAsync接受生产者Supplier作为参数返回CompletableFuture对象，对象完成异步执行后会读取调用生产者方法返回值。第一种版本会把生产者方法交由ForkJoinPool池中的某个执行线程，第二种重载版本传递第二个参数指定线程执行生产者方法。<br>《Java 8实战》中有一个比较CompletableFuture和并行流的例子: 如果一个方法需要去查询所有商店某个产品的价格，获取产品价格的方法为getPrice(String product)，假设这个方法会向商店发出网络请求并操作数据库，耗时较多。<br>首先是顺序查询方式：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> List&lt;String&gt; <span class="title">findPrices</span><span class="params">(String product)</span></span>&#123;</div><div class="line">    <span class="keyword">return</span> shops.stream()</div><div class="line">        .map(shop -&gt; String.format(<span class="string">"s% price is %.2f"</span>, shop.getName(), shop.getPrice(product)))</div><div class="line">        .collect(Collectors.toList());</div><div class="line">&#125;</div></pre></td></tr></table></figure><br>串行方法很容易理解，对一个shop列表进行流操作，依次得到每个商店该产品的价格。下面来看并行流的方式：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> List&lt;String&gt; <span class="title">findPrices</span><span class="params">(String product)</span></span>&#123;</div><div class="line">    <span class="keyword">return</span> shops.parallelStream()</div><div class="line">        .map(shop -&gt; String.format(<span class="string">"s% price is %.2f"</span>, shop.getName(), shop.getPrice(product)))</div><div class="line">        .collect(Collectors.toList());</div><div class="line">&#125;</div></pre></td></tr></table></figure><br>接下来是CompletableFuture方式：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> List&lt;String&gt; <span class="title">findPrices</span><span class="params">(String product)</span></span>&#123;</div><div class="line">    list&lt;CompletableFuture&lt;String&gt;&gt; priceFutures = shops.stream()</div><div class="line">                .map(shop -&gt; CompletableFuture.supplyAsync(</div><div class="line">                            () -&gt; shop.getName() + <span class="string">"price is"</span> + shop.getPrice(product)))</div><div class="line">                .collect(Collectors.toList());</div><div class="line">    <span class="keyword">return</span> priceFutures.stream()</div><div class="line">                .map(CompletableFuture::join)   <span class="comment">//join方法和Future的get有相同含义，唯一不同是不会抛异常</span></div><div class="line">                .collect(Collectors.toList());</div><div class="line">&#125;</div></pre></td></tr></table></figure><br>CompletableFuture和并行流很像，内部都采用同样的通用线程池，默认都是用固定数目的线程，具体线程数取决于Runtime.getRuntime.availableProcessors()的返回值。如果通用线程池大小是8，当getPrice()方法延迟足够长而商店数量增多的时候， 上面并行流和CompletableFuture方式的性能都会下降，因为8个线程都处于忙碌状态，之后的查询都要等待前面操作释放出空闲线程。并行流很难解决这种场景，而CompletableFuture具有并行流API无法提供的优势，它允许对执行器Executor进行配置，尤其是线程池的大小。<br>定制执行器：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">final</span> Executor executor = Executors.newFixedThreadPool(<span class="number">100</span>);</div><div class="line">...</div><div class="line">CompletableFuture.supplyAsync(() -&gt; shop.getName() + <span class="string">"price is"</span> + shop.getPrice(product), executor);</div></pre></td></tr></table></figure><br>这样商店数目增加就不会影响效率了。<br>总结：并行流和分支/合并框架更适用于实现并行处理，而CompletableFuture更适合实现并发，在同一个CPU上执行松耦合任务，充分利用CPU的核，所以CompletableFuture更适合IO密集型任务，并行流和ForkJoinPool更适合CPU密集型任务。</p>
-<hr>
-<h4 id="使用CompletableFuture"><a href="#使用CompletableFuture" class="headerlink" title="使用CompletableFuture"></a>使用CompletableFuture</h4><h5 id="1-创键获取CompletableFuture"><a href="#1-创键获取CompletableFuture" class="headerlink" title="1. 创键获取CompletableFuture"></a>1. 创键获取CompletableFuture</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> &lt;U&gt; <span class="function">CompletableFuture&lt;U&gt; <span class="title">supplyAsync</span><span class="params">(Supplier&lt;U&gt; supplier)</span></span>;</div><div class="line"><span class="keyword">static</span> &lt;U&gt; <span class="function">CompletableFuture&lt;U&gt; <span class="title">supplyAsync</span><span class="params">(Supplier&lt;U&gt; supplier, Executor executor)</span></span>;</div><div class="line"><span class="function"><span class="keyword">static</span> CompletableFuture&lt;Void&gt; <span class="title">runAsync</span><span class="params">(Runnable runnable)</span></span>;</div><div class="line"><span class="function"><span class="keyword">static</span> CompletableFuture&lt;Void&gt; <span class="title">runAsync</span><span class="params">(Runnable runnable, Executor executor)</span></span>;</div></pre></td></tr></table></figure>
-<p>runAsync需要Runnable为参数，不返回任何值，如果需要处理异步操作并返回结果使用supplyAsync.</p>
-<h5 id="2-组合futures"><a href="#2-组合futures" class="headerlink" title="2. 组合futures"></a>2. 组合futures</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//thenApply 参数function的函数描述符为 T -&gt; U</span></div><div class="line">&lt;U&gt; <span class="function">CompletableFuture&lt;U&gt; <span class="title">thenApply</span><span class="params">(Function&lt;? <span class="keyword">super</span> T,? extends U&gt; fn)</span></span>;</div><div class="line">&lt;U&gt; <span class="function">CompletableFuture&lt;U&gt; <span class="title">thenApplyAsync</span><span class="params">(Function&lt;? <span class="keyword">super</span> T,? extends U&gt; fn)</span></span>;</div><div class="line">&lt;U&gt; <span class="function">CompletableFuture&lt;U&gt; <span class="title">thenApplyAsync</span><span class="params">(Function&lt;? <span class="keyword">super</span> T,? extends U&gt; fn, Executor executor)</span></span>;</div><div class="line"><span class="comment">//thenCompose  参数function的函数描述符为 T -&gt; CompletableFuture&lt;U&gt;</span></div><div class="line">&lt;U&gt; <span class="function">CompletableFuture&lt;U&gt; <span class="title">thenCompose</span><span class="params">(Function&lt;? <span class="keyword">super</span> T, ? extends CompletionStage&lt;U&gt;&gt; fn)</span></span>;</div><div class="line">&lt;U&gt; <span class="function">CompletableFuture&lt;U&gt; <span class="title">thenComposeAsync</span><span class="params">(Function&lt;? <span class="keyword">super</span> T, ? extends CompletionStage&lt;U&gt;&gt; fn)</span></span>;</div><div class="line">&lt;U&gt; <span class="function">CompletableFuture&lt;U&gt; <span class="title">thenComposeAsync</span><span class="params">(Function&lt;? <span class="keyword">super</span> T, ? extends CompletionStage&lt;U&gt;&gt; fn, Executor executor)</span></span>;</div></pre></td></tr></table></figure>
-<p>从方法定义看，thenCompose可以接受一个function作为参数，这个function的函数描述符是T -&gt; CompletableFuture&lt;U&gt;，它允许对两个异步操作复合流水线，比如创建两个CompletableFuture对象，对第一个CompletableFuture对象调用thenCompose，并向它传递一个函数，当第一个CompletableFuture执行完毕后，结果将作为该函数的参数，这个函数的返回值是以第一个CompletableFuture返回作为输入计算出的第二个CompletableFuture对象。例子(只为了展示用法)：<br><img src="/img/CompletableFuture1.png" alt="2-2-1"><br>首先创建一个double集合，然后第一个CompletableFuture取每一个double的intValue()，当执行完毕时调用thenCompose方法，将执行结果作为thenCompose参数中的函数的参数，计算第二个CompletableFuture对象，把每个整型转换成字符串。最后输出的结果是1 2 3 4 5。</p>
-<h5 id="3-整合futures，无论是否依赖"><a href="#3-整合futures，无论是否依赖" class="headerlink" title="3. 整合futures，无论是否依赖"></a>3. 整合futures，无论是否依赖</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">&lt;U,V&gt; <span class="function">CompletableFuture&lt;V&gt; <span class="title">thenCombine</span><span class="params">(CompletionStage&lt;? extends U&gt; other,</span></span></div><div class="line"><span class="function"><span class="params">                        BiFunction&lt;? <span class="keyword">super</span> T,? <span class="keyword">super</span> U,? extends V&gt; fn)</span></span>;</div><div class="line">&lt;U,V&gt; <span class="function">CompletableFuture&lt;V&gt; <span class="title">thenCombineAsync</span><span class="params">(CompletionStage&lt;? extends U&gt; other,</span></span></div><div class="line"><span class="function"><span class="params">                        BiFunction&lt;? <span class="keyword">super</span> T,? <span class="keyword">super</span> U,? extends V&gt; fn)</span></span>;</div><div class="line">&lt;U,V&gt; <span class="function">CompletableFuture&lt;V&gt; <span class="title">thenCombineAsync</span><span class="params">(CompletionStage&lt;? extends U&gt; other,</span></span></div><div class="line"><span class="function"><span class="params">                        BiFunction&lt;? <span class="keyword">super</span> T,? <span class="keyword">super</span> U,? extends V&gt; fn, Executor executor)</span></span>;</div></pre></td></tr></table></figure>
-<p><img src="/img/CompletableFuture2.png" alt="2-3-1"><br>第二个参数BiFunction定义如何将两个CompletableFuture的结果组合在一起。</p>
-<h5 id="4-completion事件"><a href="#4-completion事件" class="headerlink" title="4. completion事件"></a>4. completion事件</h5><p>之前所说的例子都是在所有商店的返回值都取得之后才显示商品价格。如果想要商店返回商品价格第一时间就显示返回值就需要completion事件。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//thenAccept</span></div><div class="line"><span class="function">CompletableFuture&lt;Void&gt; <span class="title">thenAccept</span><span class="params">(Consumer&lt;? <span class="keyword">super</span> T&gt; action)</span></span>;</div><div class="line"><span class="function">CompletableFuture&lt;Void&gt; <span class="title">thenAcceptAsync</span><span class="params">(Consumer&lt;? <span class="keyword">super</span> T&gt; action)</span></span>;</div><div class="line"><span class="function">CompletableFuture&lt;Void&gt; <span class="title">thenAcceptAsync</span><span class="params">(Consumer&lt;? <span class="keyword">super</span> T&gt; action, Executor executor)</span></span>;</div><div class="line"><span class="comment">//thenRun</span></div><div class="line"><span class="function">CompletableFuture&lt;Void&gt; <span class="title">thenRun</span><span class="params">(Runnable action)</span></span>;</div><div class="line"><span class="function">CompletableFuture&lt;Void&gt; <span class="title">thenRunAsync</span><span class="params">(Runnable action)</span></span>;</div><div class="line"><span class="function">CompletableFuture&lt;Void&gt; <span class="title">thenRunAsync</span><span class="params">(Runnable action, Executor executor)</span></span>;</div></pre></td></tr></table></figure><br><img src="/img/CompletableFuture3.png" alt="2-4-1"><br>CompletableFuture类中还提供了一些其他的completion事件，可以看做给CompletableFuture注册一个回调函数，在Future执行完毕或者计算结果可用时针对性执行一些程序。</p>
-<blockquote>
-<p>参考：<br>《Java 8函数式编程》– Richard Warburton<br>《Java 8 in Action》– Raoul-Gabriel Urma, Mario Fusco, Alan Mycroft</p>
-</blockquote>
-]]></content>
-      
-        <categories>
-            
-            <category> Java </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> Java </tag>
-            
-            <tag> Java 8 </tag>
-            
-            <tag> CompletableFuture </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[关于《龙族》]]></title>
-      <url>/2017/10/18/%E5%85%B3%E4%BA%8E%E3%80%8A%E9%BE%99%E6%97%8F%E3%80%8B/</url>
-      <content type="html"><![CDATA[<p>听说《上海堡垒》要拍电影了。想来江南是要忙着做编剧去了，不知道龙五又要等到什么时候。谈到《龙族》不得不吐槽作者。我还从没见过哪个作家像南大这样拖稿的，当然他主业太多，没时间搞写作的副业。</p>
-<p>我从大一上学期开始追海贼，下学期追妖尾，追龙族却是从高二开始的。今年妖尾完结了，龙五还遥遥无期。高中的时候没多少课余时间，一周只有半天假，也还是磕磕绊绊地追了两部。因为看了龙族，后来又顺带看了《此间的少年》和《九州缥缈录》，但都没能像龙族这样让我钟意。</p>
-<p>龙族并不是第一眼就讨人喜欢的，主角又衰又懦弱，一副小心翼翼垂头丧气的样子却还是当众出丑，读起来并不酣畅淋漓。然而诺诺适时地登场，她推门而入，目光如刀，牵起这个衰仔，高傲地穿过人群。</p>
-<blockquote>
-<p>人一生里总有几次觉得自己看见了天堂之门洞开，路明非等了十八年，在他最衰的那一刻，门开了。</p>
-</blockquote>
-<p>我最开始并不喜欢路明非，吸引我看下去的是浑身都是棱角，骄傲又耀眼的诺诺</p>
-<hr>
-<p>看龙族的女生可能有超过三分之一喜欢凯撒，多金又帅气，霸道又温柔，这样的人却偏偏又专一，没有一丝破绽。应该还有超过三分之一喜欢楚子航，沉默，冷静，仗义，强得离谱。剩下的大概也没多少喜欢路明非，因为他确实从头衰到脚。<br>然而路明非才是大部分人的样子。有想做的事，想保护的人，但是他实在太衰了，只能窝在角落里，目光呆滞，盯着聚光灯下的凯撒牵着诺诺的手，还要嘟囔着学姐你要幸福这样的烂话。</p>
-<blockquote>
-<p>最孤单的人分两种，一种恨不得全世界都跟他一样倒霉，一种则希望别人能幸福，因为看到幸福的人，他也略略觉得温暖。</p>
-</blockquote>
-<p>他总是这样衰，衰到忘记是自己卖掉灵魂斩了龙王，是自己在三峡的江底豁出命救下的诺诺。他做了想做的事，保护了要保护的人，站在聚光灯下的依然不是他，所以他认了命，以为自己只能是个衰人。<br>我一直在等着路明非撕掉懦弱的面具，穿越荒原，竖起战旗，哪怕失去灵魂，背叛世界，也不要耷拉着脑袋，满嘴烂话。但是直到第四部，他都还在有气无力地耍着贫嘴。</p>
-<hr>
-<p>龙族是本很难定义的小说。它看起来好像是个中二的屠龙故事，又好像是衰仔的自我救赎。我不知道江南最想表达什么，在我看来，这更像是一群孤独者的狂欢。<br>龙族里的每一个主角几乎都是孤独的。</p>
-<p>凯撒似乎是最不应该孤独的。他几乎拥有一切，生来就是领袖，注定是屠龙的英雄，于是便也没有人在乎其实他也只是个破小孩。所以当他遇到诺诺，好像从井口照下一道光，人生中又多了其他寄托。凯撒这样的人，愿意满世界地追着一个女孩跑，也就不难理解了。他那么孤独，如果没有诺诺，就只有自己一个人了。</p>
-<p>楚子航则不同，他是一眼就看得出来的孤独。他的孤独更多来自愧疚。在雨中的高架桥上，看着嬉皮笑脸一事无成的老爸挥舞着太刀淹没在死侍中，他却只能开着迈巴赫惊恐地逃走。从那天起他再也没有畏惧过，即使一个人面对龙王。对于楚子航，最大的荣耀应该是和父亲一起战死吧。后来他遇到了夏弥，似乎终于有个女孩要从孤独中拉他出来了。他第一次动了心，女孩却是条龙。他从此再也逃不出来了。</p>
-<p>昂热的孤独隐藏的很好，却也很明显。他的孤独源自仇恨，继而表现在屠龙的狂热上。一个一百多岁的老头，每天混迹在上流酒宴，搂着法国名模谈笑风生。但当他面对真正的龙类的时候，立刻变了一个人。不再是款款而谈的绅士，更像杀红眼的亡命之徒。只有那些跟他一样老得掉了牙的伙计才知道，眼看着同伴一个一个死在自己面前，昂热是怎么坚持活下来的。他孤独到靠着仇恨支撑自己生的希望。</p>
-<p>而路明非，大概是孤独的极点了。明知道什么事都不可能，还非要揣着希望，明明想为什么人把命都赌上，可是连下注的理由都没有，这大概就是路明非的孤独。</p>
-<blockquote>
-<p>你最爱的人，你为他做了很多事，但他不知道，因为你觉得做这些事都是应该的，你忘记跟他说了。</p>
-</blockquote>
-<p>他的孤独，是从不被需要，不管他做了什么。没有人觉得他多重要，没有人关心他做了什么，渐渐连他自己都觉得自己是多余的。唯一关心他的人，是一心想买断他灵魂的路鸣泽。这是一个死结。只有他卖掉灵魂歇斯底里的时候，才觉得自己是被需要的，可是当他真的卖光了灵魂也许就只剩下永恒的孤独了。不管是人还是龙，路明非都注定要踽踽独行。</p>
-<hr>
-<p>路明非倒也不是一直这样孤独，至少有一段时间不是。<br>龙族里的女性角色都很棒，不论是零，诺诺，苏恩曦还是酒德麻衣。但是绘离衣更让人难忘。我猜很多人最开始喜欢绘离衣，应该是因为只有她喜欢路明非吧。她血统纯正，心智却不足，就像活在自己世界里的孩子，很难定义她对路明非的喜欢。但是对她来说，路明非一定很重要，比自己的生命都重要。</p>
-<blockquote>
-<p>“04.24，和Sakura去东京天空树，世界上最暖和的地方在天空树的顶上。”<br>“04.25，和Sakura去明治神宫，有人在那里举办婚礼。”<br>“04.26，和Sakura去迪士尼，鬼屋很可怕，但是有Sakura在，所以不可怕。”<br>“Sakura最好了。”</p>
-</blockquote>
-<p>绘离衣的日记里都是他。<br>明明路明非那么渴望有人在乎他，终于有个人视他如生命，他却没有抓住。小怪兽终究要被正义的奥特曼杀死，他没能像当时救诺诺那样救绘离衣。真替绘离衣不值，为了救诺诺，路明非毅然决然地卖掉灵魂。但是救绘离衣的时候，他却犹豫了，即使她说Sakura最好了。江南收了那么多刀片还是写死了绘离衣，也许他觉得路明非就应该一个人，要么救赎，要么沉沦。</p>
-<hr>
-<p>未完待续</p>
-]]></content>
-      
-        <categories>
-            
-            <category> 小说 </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> 小说 </tag>
-            
-            <tag> 龙族 </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[Java 8 - Stream]]></title>
-      <url>/2017/10/17/Java-8-Stream/</url>
-      <content type="html"><![CDATA[<h4 id="流的概念"><a href="#流的概念" class="headerlink" title="流的概念"></a>流的概念</h4><p>流允许以声明式方式处理数据集合，可以姑且把它们看成遍历数据集的高级迭代器。此外流可以透明地并行处理。</p>
-<h5 id="1"><a href="#1" class="headerlink" title="1."></a>1.</h5><p>优点</p>
-<ul>
-<li>声明性 — 更简洁，更易读</li>
-<li>可复合 — 更灵活</li>
-<li>可并行 — 性能更好</li>
-</ul>
-<h5 id="2"><a href="#2" class="headerlink" title="2."></a>2.</h5><p>流操作有两个重要的特点</p>
-<ul>
-<li>流水线 — 很多流操作本身会返回一个流，这样多个操作就可以链接起来形成流水线。</li>
-<li>内部迭代 — 流的迭代在背后进行，与显式使用迭代器不同。</li>
-</ul>
-<h5 id="3"><a href="#3" class="headerlink" title="3."></a>3.</h5><p>集合和流的区别在于什么时候计算。集合中的每个元素都要先算出来才添加到集合中，流则是在概念上固定的数据结构，其元素是按需计算的。这个思想是用户仅仅从流中提取需要的值。从另一个角度看流就像延迟创建的集合。</p>
-<h5 id="4"><a href="#4" class="headerlink" title="4."></a>4.</h5><p>流与迭代器类似，只能遍历一次，遍历完这个流就已经被消费掉了。</p>
-<h5 id="5"><a href="#5" class="headerlink" title="5."></a>5.</h5><p>流操作可以分为两类，中间操作和终端操作:</p>
-<ul>
-<li>中间操作指可以连接起来的流操作：如filter，sorted，map和limit等，除非流水线触发终端操作，否则中间操作不会执行任何结果。</li>
-<li>终端操作可以从流的流水线生成结果，如forEach，collect。</li>
-</ul>
-<h5 id="6"><a href="#6" class="headerlink" title="6."></a>6.</h5><p>使用流一般包括三件事：</p>
-<ul>
-<li>一个数据源（如集合）来执行一个操作</li>
-<li>一个中间操作链，形成流水线</li>
-<li>一个终端操作，执行流水线并生成结果</li>
-</ul>
-<hr>
-<h4 id="使用流"><a href="#使用流" class="headerlink" title="使用流"></a>使用流</h4><h5 id="1-筛选和切片"><a href="#1-筛选和切片" class="headerlink" title="1. 筛选和切片"></a>1. 筛选和切片</h5><p>下面列举几个常见的流<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//用谓词筛选</span></div><div class="line"><span class="function">Stream&lt;T&gt; <span class="title">filter</span><span class="params">(Predicate&lt;? <span class="keyword">super</span> T&gt; predicate)</span></span>;</div><div class="line"><span class="comment">//筛选各异的元素</span></div><div class="line"><span class="function">Stream&lt;T&gt; <span class="title">distinct</span><span class="params">()</span></span>;</div><div class="line"><span class="comment">//截断流，返回不超过给定长度的流</span></div><div class="line"><span class="function">Stream&lt;T&gt; <span class="title">limit</span><span class="params">(<span class="keyword">long</span> maxSize)</span></span>;</div><div class="line"><span class="comment">//返回扔掉前n个元素的流，如果流中元素不足n个则返回空流</span></div><div class="line"><span class="function">Stream&lt;T&gt; <span class="title">skip</span><span class="params">(<span class="keyword">long</span> n)</span></span>;</div></pre></td></tr></table></figure><br>下面代码筛选出苹果中重于100克的第4和第5个苹果。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">List&lt;Apple&gt; bigAppleList = appleList.stream().filter(apple -&gt; apple.getWeight() &gt; <span class="number">100</span>)</div><div class="line">                                    .limit(<span class="number">5</span>).skip(<span class="number">3</span>).collect(toList());</div></pre></td></tr></table></figure></p>
-<h5 id="2-映射"><a href="#2-映射" class="headerlink" title="2. 映射"></a>2. 映射</h5><p>下面列举几个常见的流<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//map方法接受function作为参数，并被应用在每个元素上映射成新的元素</span></div><div class="line">&lt;R&gt; <span class="function">Stream&lt;R&gt; <span class="title">map</span><span class="params">(Function&lt;? <span class="keyword">super</span> T, ? extends R&gt; mapper)</span></span>;</div><div class="line">&lt;R&gt; <span class="function">Stream&lt;R&gt; <span class="title">flatMap</span><span class="params">(Function&lt;? <span class="keyword">super</span> T, ? extends Stream&lt;? extends R&gt;&gt; mapper)</span></span>;</div></pre></td></tr></table></figure><br>从flatMap的函数定义来看，它接受一个function，而这个function的第二个参数是stream，也就是说函数描述符为T→Stream<r>， Arrays中有stream()方法可以将数组转化成流。<br><img src="/img/stream1.png" alt="2-1"><br>等同于：<br><img src="/img/stream2.png" alt="2-2"><br>map被应用到数组中的两个字符串”Hello”和”World”中，映射成两个String数组，而我们想要的是Stream&lt;String&gt;而不是Stream&lt;String[]&gt;，如果用map来映射将会得到流的列表，所以需要用flatMap把各个数组映射成一个流。<br>简单来说，flatMap方法会把一个流中的每个值都转换成另一个流，然后把所有流连接起来成为一个流。</r></p>
-<h5 id="3-查找和匹配"><a href="#3-查找和匹配" class="headerlink" title="3. 查找和匹配"></a>3. 查找和匹配</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//流中是否有一个元素匹配给定的谓词</span></div><div class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">anyMatch</span><span class="params">(Predicate&lt;? <span class="keyword">super</span> T&gt; predicate)</span></span>;</div><div class="line"><span class="comment">//流中的元素是否都能匹配给定的谓词</span></div><div class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">allMatch</span><span class="params">(Predicate&lt;? <span class="keyword">super</span> T&gt; predicate)</span></span>;</div><div class="line"><span class="comment">//流中没有元素与给定的谓词匹配</span></div><div class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">noneMatch</span><span class="params">(Predicate&lt;? <span class="keyword">super</span> T&gt; predicate)</span></span>;</div><div class="line"><span class="comment">//返回流中任意元素。流水线将会利用短路找到结果立即结束</span></div><div class="line"><span class="function">Optional&lt;T&gt; <span class="title">findAny</span><span class="params">()</span></span>;</div><div class="line"><span class="comment">//找到第一个元素。在并行上限制较多，如果不关心返回元素是哪一个建议使用findAny()，因为它在并行流上限制较少</span></div><div class="line"><span class="function">Optional&lt;T&gt; <span class="title">findFirst</span><span class="params">()</span></span>;</div></pre></td></tr></table></figure>
-<h5 id="4-归约"><a href="#4-归约" class="headerlink" title="4. 归约"></a>4. 归约</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 第一个参数为初始值</span></div><div class="line"><span class="function">T <span class="title">reduce</span><span class="params">(T identity, BinaryOperator&lt;T&gt; accumulator)</span></span>;</div><div class="line"><span class="comment">// 无初始值,考虑流中没有任何元素的情况，reduce无法返回和，所以结果包裹在Optional对象里以表明和可能不存在</span></div><div class="line"><span class="function">Optional&lt;T&gt; <span class="title">reduce</span><span class="params">(BinaryOperator&lt;T&gt; accumulator)</span></span>;</div></pre></td></tr></table></figure>
-<p>想计算整型数组的和：<br><img src="/img/stream3.png" alt="&quot;2-3&quot;"><br>结果是20。<br>reduce() 也可以用来求最大值或者最小值。</p>
-<hr>
-<h4 id="数值流"><a href="#数值流" class="headerlink" title="数值流"></a>数值流</h4><p>和函数式接口的原始类型特化一样，为避免装箱拆箱成本，Stream API提供了数值流。<br>Java 8引入三个原始类型特化流：IntStream, DoubleStream和LongStream, 分别将流中的元素特化为int，double和long，从而避免了reduce时暗含的拆箱成本。每个接口都带来了进行常用数值归约的新方法，例如count(), max(), min(), average()和sum()等。<br>映射到数值流：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="function">IntStream <span class="title">mapToInt</span><span class="params">(ToIntFunction&lt;? <span class="keyword">super</span> T&gt; mapper)</span></span>;</div><div class="line"><span class="function">LongStream <span class="title">mapToLong</span><span class="params">(ToLongFunction&lt;? <span class="keyword">super</span> T&gt; mapper)</span></span>;</div><div class="line"><span class="function">DoubleStream <span class="title">mapToDouble</span><span class="params">(ToDoubleFunction&lt;? <span class="keyword">super</span> T&gt; mapper)</span></span>;</div></pre></td></tr></table></figure><br>转换回对象流：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="function">Stream&lt;Integer&gt; <span class="title">boxed</span><span class="params">()</span></span>;</div></pre></td></tr></table></figure><br>使用方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">IntStream intStream = appleList.stream().mapToInt(Apple::getWeight);   <span class="comment">//转换成数值流</span></div><div class="line">Stream&lt;Integer&gt; stream = intStream.boxed();   <span class="comment">//转换成Stream</span></div></pre></td></tr></table></figure><br>数值流中有很多实用的方法，如求数值范围，IntStream evenNumbers = IntStream.rangeClosed(1, 100);</p>
-<hr>
-<h4 id="构建流"><a href="#构建流" class="headerlink" title="构建流"></a>构建流</h4><p>除了从集合生成流，还有其他几种生成流的方式</p>
-<h5 id="1-由值构建流"><a href="#1-由值构建流" class="headerlink" title="1. 由值构建流"></a>1. 由值构建流</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Stream&lt;String&gt; stream = Stream.of(<span class="string">"zhao"</span>, <span class="string">"hong"</span>, <span class="string">"yu"</span>);</div><div class="line">Stream&lt;String&gt; emptyStream = Stream.empty();</div></pre></td></tr></table></figure>
-<h5 id="2-由数组构造流"><a href="#2-由数组构造流" class="headerlink" title="2. 由数组构造流"></a>2. 由数组构造流</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">String[] name = &#123;<span class="string">"zhao"</span>, <span class="string">"hong"</span>, <span class="string">"yu"</span>&#125;;</div><div class="line">Stream&lt;String&gt; stream = Arrays.stream(name);</div></pre></td></tr></table></figure>
-<h5 id="3-由文件生成流"><a href="#3-由文件生成流" class="headerlink" title="3. 由文件生成流"></a>3. 由文件生成流</h5><p>java.nio.file.Files中有很多静态方法可以返回一个流，例如Files.lines会返回指定文件中各行构成的字符串流。使用的不多，先不介绍。</p>
-<h5 id="4-由函数生成流"><a href="#4-由函数生成流" class="headerlink" title="4. 由函数生成流"></a>4. 由函数生成流</h5><p>Stream API 提供了两个静态方法从函数生成流：Stream.iterate和Stream.generate。这两个操作可以创建无限流。一般会用limit来加以限制<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">Stream.iterate(<span class="number">0</span>, n -&gt; n+<span class="number">2</span>).limit(<span class="number">100</span>).forEach(System.out::println);</div></pre></td></tr></table></figure><br>生成结果是从0开始公差为2的等差数列的前100项。</p>
-<hr>
-<h4 id="用流收集数据"><a href="#用流收集数据" class="headerlink" title="用流收集数据"></a>用流收集数据</h4><p>终端操作除了count, findFirst, reduce, forEach等，最常用的是collect操作。collect接受Collector作为参数<br>Collectors类提供了很多常用的静态工厂方法生成Collector：<br><img src="/img/stream4.png" alt="4-1"></p>
-<blockquote>
-<p>参考：<br>《Java 8函数式编程》– Richard Warburton<br>《Java 8 in Action》– Raoul-Gabriel Urma, Mario Fusco, Alan Mycroft</p>
-</blockquote>
-]]></content>
-      
-        <categories>
-            
-            <category> Java </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> Java </tag>
-            
-            <tag> Java 8 </tag>
-            
-            <tag> Stream </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[Java 8 - Lambda]]></title>
-      <url>/2017/10/16/Java-8-Lambda/</url>
-      <content type="html"><![CDATA[<h4 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h4><p>从一个例子开始：用Lambda实现一个比较器</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">Comparator&lt;Apple&gt; byWeight = </div><div class="line">   (Apple apple1, Apple apple2) -&gt; apple1.getWeight().compareTo(apple2.getWeight());</div></pre></td></tr></table></figure>
-<p>Lambda表达式有三个部分：</p>
-<ul>
-<li>参数列表：两个Apple</li>
-<li>箭头：箭头把参数列表和Lambda主体分隔开</li>
-<li>Lambda主体：比较两个Apple的重量。表达式就是Lambda的返回值</li>
-</ul>
-<p>Lambda表达式的基本语法有两种：</p>
-<ul>
-<li>(parameters) -&gt; expression</li>
-<li>(parameters) -&gt; {statements;}</li>
-</ul>
-<p>注：expression隐含了return，如果想显示返回语句需要使用第二种statements语法。</p>
-<hr>
-<h4 id="何时使用Lambda"><a href="#何时使用Lambda" class="headerlink" title="何时使用Lambda"></a>何时使用Lambda</h4><p>我们可以在函数式接口上使用Lambda表达式。<br>函数式接口：只定义一个抽象方法的接口(比如例子中的Comparator接口只定义了一个compare()抽象方法)。<br>注：<font color="blue">Java 8中新增了默认方法，即在类没有对方法进行实现时，主体为方法提供默认实现的方法。</font>不管有多少默认方法，只要接口只定义了一个抽象方法，它就仍然是一个函数式接口。</p>
-<hr>
-<h4 id="函数式接口"><a href="#函数式接口" class="headerlink" title="函数式接口"></a>函数式接口</h4><p>函数式接口很有用，因为抽象方法的签名可以描述Lambda表达式的签名，函数式接口的抽象方法签名称为函数描述符。<br>java.util.function包中定义了一些常用的函数式接口：<br>(注：@FunctionalInterface 注解用于表示该接口会设计成一个函数式接口。接口代码省略了默认方法)。</p>
-<h5 id="1-Predicate"><a href="#1-Predicate" class="headerlink" title="1) Predicate"></a>1) Predicate<t></t></h5><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@FunctionalInterface</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Predicate</span>&lt;<span class="title">T</span>&gt; </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">boolean</span> <span class="title">test</span><span class="params">(T t)</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>Predicate接口定义了一个test抽象方法，接受泛型T对象，返回一个boolean。适用于filter中。</p>
-<h5 id="2-Consumer"><a href="#2-Consumer" class="headerlink" title="2) Consumer"></a>2) Consumer<t></t></h5><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@FunctionalInterface</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Consumer</span>&lt;<span class="title">T</span>&gt; </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">accept</span><span class="params">(T t)</span></span>;</div><div class="line">&#125;    </div></pre></td></tr></table></figure>
-<p>Consumer定义了一个accept抽象方法，接受泛型T对象，没有返回。如果需要访问一个对象并对其执行某些操作就可以使用这个接口。</p>
-<h5 id="3-Function"><a href="#3-Function" class="headerlink" title="3) Function"></a>3) Function<t, r=""></t,></h5><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@FunctionalInterface</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Function</span>&lt;<span class="title">T</span>, <span class="title">R</span>&gt; </span>&#123;</div><div class="line">    <span class="function">R <span class="title">apply</span><span class="params">(T t)</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>Function接口定义了apply方法，接受泛型T对象，返回泛型R对象。适用于map方法中。</p>
-<h5 id="4-其他函数式接口"><a href="#4-其他函数式接口" class="headerlink" title="4) 其他函数式接口"></a>4) 其他函数式接口</h5><table>
-<thead>
-<tr>
-<th>函数式接口</th>
-<th>抽象方法</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>BiConsumer&lt;T, U&gt;</td>
-<td>void accept(T t, U u)</td>
-</tr>
-<tr>
-<td>BiFunction&lt;T, U, R&gt;</td>
-<td>R apply(T t, U u)</td>
-</tr>
-<tr>
-<td>BinaryOperator&lt;T&gt; extends BiFunction&lt;T,T,T&gt;</td>
-<td>T apply(T t1, T t2)</td>
-</tr>
-<tr>
-<td>BiPredicate&lt;T, U&gt;</td>
-<td>boolean test(T t, U u)</td>
-</tr>
-<tr>
-<td>Supplier&lt;T&gt;</td>
-<td>T get()</td>
-</tr>
-<tr>
-<td>UnaryOperator&lt;T&gt; extends Function<t, t=""></t,></td>
-<td>T apply(T t)</td>
-</tr>
-</tbody>
-</table>
-<h5 id="5-原始类型特化"><a href="#5-原始类型特化" class="headerlink" title="5) 原始类型特化"></a>5) 原始类型特化</h5><p>上述函数式接口的抽象方法都使用了泛型，泛型只能绑定引用类型，那么在输入输出是原始类型时会进行自动装箱，影响性能。 java.util.function中提供了专门的函数式接口避免装箱操作。<br>比如:</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@FunctionalInterface</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">IntPredicate</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">boolean</span> <span class="title">test</span><span class="params">(<span class="keyword">int</span> value)</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>    
-<p>如何使用它：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">IntPredicate evenNumbers = (<span class="keyword">int</span> i) -&gt; i% <span class="number">2</span> == <span class="number">0</span>;</div><div class="line">evenNumbers.test(<span class="number">1000</span>);</div></pre></td></tr></table></figure><br>使用IntPredicate不会对1000装箱，如果用Predicate&lt;Integer&gt;会把1000装到Integer对象中。<br>之前提到的函数式接口都有很多对应的类型特化接口，具体可在java.util.function包中查看。</p>
-<hr>
-<h4 id="方法引用"><a href="#方法引用" class="headerlink" title="方法引用"></a>方法引用</h4><p>方法引用可以看做仅仅调用特定方法的Lambda的一种快捷写法，语法糖。<br>构建方法引用：</p>
-<ul>
-<li>指向静态方法的方法引用：例如Integer的parseInt方法，可以写作Integer:parseInt</li>
-<li>指向任意类型实例方法的方法引用：例如String的length方法，写作String::length</li>
-<li>指向现有对象的实例方法的方法引用：与第二种的区别是第二种是在引用一个对象的方法，而这个对象本身是Lambda的一个参数，第三种方法引用指在Lambda中调用一个已存在的外部对象的方法</li>
-</ul>
-<p><img src="/img/method.png" alt="方法引用"></p>
-<hr>
-<h4 id="复合Lambda表达式"><a href="#复合Lambda表达式" class="headerlink" title="复合Lambda表达式"></a>复合Lambda表达式</h4><p>多个简单的Lambda表达式可以复合成复杂的表达式，比如让两个Predicate做or操作，或者一个Function的输出作为另一个Function的输入。但是函数式接口只有一个抽象方法，实现复合操作的是前面提到的默认方法。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@FunctionalInterface</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Predicate</span>&lt;<span class="title">T</span>&gt; </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">default</span> Predicate&lt;T&gt; <span class="title">and</span><span class="params">(Predicate&lt;? <span class="keyword">super</span> T&gt; other)</span> </span>&#123;</div><div class="line">    	Objects.requireNonNull(other);</div><div class="line">	    <span class="keyword">return</span> (t) -&gt; test(t) &amp;&amp; other.test(t);</div><div class="line">    &#125;</div><div class="line">  </div><div class="line">    <span class="function"><span class="keyword">default</span> Predicate&lt;T&gt; <span class="title">negate</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> (t) -&gt; !test(t);&#125;</div><div class="line">  </div><div class="line">    <span class="function"><span class="keyword">default</span> Predicate&lt;T&gt; <span class="title">or</span><span class="params">(Predicate&lt;? <span class="keyword">super</span> T&gt; other)</span> </span>&#123;</div><div class="line">	    Objects.requireNonNull(other);</div><div class="line">	    <span class="keyword">return</span> (t) -&gt; test(t) || other.test(t);</div><div class="line">    &#125;    </div><div class="line">&#125;    </div></pre></td></tr></table></figure>
-<p>Predicate接口除了唯一抽象方法外，还有三个默认方法，negate，and和or，可以重用已有的Predicate来创建更复杂的谓词。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//苹果是红的</span></div><div class="line">Predicate&lt;Apple&gt; redApple = apple -&gt; <span class="string">"red"</span>.equals(apple.getColor());  </div><div class="line"><span class="comment">//苹果不是红的</span></div><div class="line">Predicate&lt;Apple&gt; notRedApple = redApple.negate();  </div><div class="line"><span class="comment">//苹果是红色又比100克重           </span></div><div class="line">Predicate&lt;Apple&gt; redAndHeavyApple = redApple.and(apple -&gt; apple.getWeight() &gt; <span class="number">100</span>);</div><div class="line"><span class="comment">//苹果是比100克重的红苹果，或者是绿苹果  </span></div><div class="line">Predicate&lt;Apple&gt; redAndHeavyAppleOrGreen = </div><div class="line">    redApple.and(apple -&gt; apple.getWeight() &gt; <span class="number">100</span>)</div><div class="line">            .or(apple -&gt; <span class="string">"Green"</span>.equals(apple.getColor()));</div></pre></td></tr></table></figure>
-<p>一个复合Function的例子：</p>
-<p><img src="/img/function.png" alt="复合Function"></p>
-<p>Function接口提供了andThen和compose两个默认方法，andThen相当于 multiply(add(x))，compose相当于 add(multiply(x))。<br>所以上面程序的结果是：4和3。<br>很多函数式接口都有默认方法来结合Lambda表达式复合成更复杂的表达式。</p>
-<hr>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>Lambda表达式可以理解为一种匿名函数，只有在接受函数式接口的地方才可以使用lambda表达式，它允许直接内联，为函数式接口的抽象方法提供实现，<font color="blue">并且将整个表达式作为函数式接口的一个实例。</font></p>
-<blockquote>
-<p>参考：<br>《Java 8函数式编程》– Richard Warburton<br>《Java 8 in Action》– Raoul-Gabriel Urma, Mario Fusco, Alan Mycroft</p>
-</blockquote>
-]]></content>
-      
-        <categories>
-            
-            <category> Java </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> Java </tag>
-            
-            <tag> Java 8 </tag>
-            
-            <tag> Lambda </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
-      <title><![CDATA[First Move]]></title>
-      <url>/2017/10/15/First-Move/</url>
-      <content type="html"><![CDATA[<blockquote>
-<p>“你没有什么话想说吗？”  — “有啊”<br>“为什么不说？” — “懒得说”<br>“那就写下来”</p>
-</blockquote>
-<h4 id="为什么做这个博客"><a href="#为什么做这个博客" class="headerlink" title="为什么做这个博客"></a>为什么做这个博客</h4><p>不知不觉工作了快五个月了，好像每天都有汹涌的信息和新鲜事灌进脑子里，密度远远超过了大学里。我一直在被动地接受新知识的冲击，继而渐渐感到不安。我不知道这些东西在哪，我不知道我有没有抓住他们。当我看到的越多，也就越知道我没看到的更多。</p>
-<p>最近似乎独处的时间很多，其实也算不上独处，毕竟每天有超过十个小时窝在公司的椅子里。但是一天下来，好像也没怎么张过嘴。我已经慢慢学不会主动找人说话了，似乎习惯了一个人做事，也乐得清静。这样的生活久了，也就明白了我要依靠的只有自己罢了。</p>
-<p>前段时间看了小朋友演的红楼梦，想起我曾经最迷的书就是这本。但是我现在连十二钗都记不全了。如此想来我用了两个暑假看了两遍，好像都在浪费时间了。心里觉得不甘，于是就又买了一套，当看到封面的时候，莫名觉得欣喜又感动，好像又看到了那个夏天，不写暑假作业，偷偷看“杂书”的我。</p>
-<p>这些算不上什么理由，也毫无逻辑。我本来也不擅长写东西，不会引经据典，条理不清晰，没有论据论点。那到底为什么要搭这个博客呢？大概是想发现些问题，积累点知识，以后不至于失业吧；大概是一个人呆的时间久了，想做点有意思的事不至于太寂寞吧；大概是想记录下时光，给以后或许会迷茫的自己吧。可能这些原因都有，也可能都不是，我唯一真切地记得的是，昨天晚上躺在床上，脑子里有声音问我有没有什么话想说，突然发现自己也有很多想法要表达。那就做个博客吧。我看了看手机，十二点半，嗯，还早着。于是就一晚上都没睡。</p>
-<hr>
-<h4 id="要记录些什么"><a href="#要记录些什么" class="headerlink" title="要记录些什么"></a>要记录些什么</h4><p>我想，这应该会是个披着技术外衣的生活类博客吧。我给这个博客定的title是dabbler，牛津词典翻译成浅尝者，说白了就是半吊子。我觉得半吊子似乎是对自己很好的诠释。我好像还没有大牛们用技术推动世界的宏伟理想，所以应该会花很多时间来闲扯淡。</p>
-<p>当然，不管怎样，至少他应该要穿着那件外衣的。不管工作中还是私下里，遇到的技术问题都值得记下来，看过的书也有必要做些笔记。但是只谈技术未免太严肃，就好像是一个从不洗头不洗澡对着电脑敲一天代码的死宅一样。如果有一天看了哪本小说，可能会记下里面几句话；如果看了哪部动漫，可能会交流二次元文化；如果出去旅游，可能会贴几张照片；如果有一天我遇到另一个人，那可能就有两个人写博客了。</p>
-<p>不管怎样，我希望记录的东西不止有意义，有价值，更要有趣。至少对我来说是有趣的。以后有一天看到今天写的东西，还会笑着想那时候我可真蠢啊。</p>
-<hr>
-<h4 id="First-Move"><a href="#First-Move" class="headerlink" title="First Move"></a>First Move</h4><p>这一篇就暂告一段落了。在写这几百个字的过程中，也算是重新认识自己，我的文笔是真的差。<br>First move是标题，也是结尾，第一篇算是个契机，第一步也不只写篇博客这么肤浅。历史的车轮滚滚向前，哪有时间停滞不前。</p>
-<blockquote>
-<p>竹杖芒鞋轻胜马，谁怕？一蓑烟雨任平生。</p>
-</blockquote>
-<p>煮碗鸡汤喝，明天又是星期一。</p>
-]]></content>
-      
-        <categories>
-            
-            <category> 随笔 </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> 生活 </tag>
-            
-            <tag> 随笔 </tag>
-            
-        </tags>
-        
-    </entry>
-    
-  
-  
+<search>
+  <entry>
+    <title><![CDATA[Java 8 - CompletableFuture]]></title>
+    <url>%2F2017%2F10%2F18%2FJava-8-CompletableFuture%2F</url>
+    <content type="text"><![CDATA[概览Java 8新增了CompletableFuture类，和stream类似，CompletableFuture也使用了Lambda表达式以及流水线思想，从这个角度来说CompletableFuture和Future的关系就跟Stream和Collection一样。既然CompletableFuture和Stream在设计上有相似之处，而且stream提供了并行流，不妨先从比较两者的关系入手。CompletableFuture类提供了大量精巧的工厂方法，使用这些方法能更容易地完成整个流程：先看其中一个工厂方法的两个版本：123public static &lt;U&gt; CompletableFuture&lt;U&gt; supplyAsync(Supplier&lt;U&gt; supplier);public static &lt;U&gt; CompletableFuture&lt;U&gt; supplyAsync(Supplier&lt;U&gt; supplier, Executor executor);supplyAsync接受生产者Supplier作为参数返回CompletableFuture对象，对象完成异步执行后会读取调用生产者方法返回值。第一种版本会把生产者方法交由ForkJoinPool池中的某个执行线程，第二种重载版本传递第二个参数指定线程执行生产者方法。《Java 8实战》中有一个比较CompletableFuture和并行流的例子: 如果一个方法需要去查询所有商店某个产品的价格，获取产品价格的方法为getPrice(String product)，假设这个方法会向商店发出网络请求并操作数据库，耗时较多。首先是顺序查询方式：12345public List&lt;String&gt; findPrices(String product)&#123; return shops.stream() .map(shop -&gt; String.format("s% price is %.2f", shop.getName(), shop.getPrice(product))) .collect(Collectors.toList());&#125;串行方法很容易理解，对一个shop列表进行流操作，依次得到每个商店该产品的价格。下面来看并行流的方式：12345public List&lt;String&gt; findPrices(String product)&#123; return shops.parallelStream() .map(shop -&gt; String.format("s% price is %.2f", shop.getName(), shop.getPrice(product))) .collect(Collectors.toList());&#125;接下来是CompletableFuture方式：123456789public List&lt;String&gt; findPrices(String product)&#123; list&lt;CompletableFuture&lt;String&gt;&gt; priceFutures = shops.stream() .map(shop -&gt; CompletableFuture.supplyAsync( () -&gt; shop.getName() + "price is" + shop.getPrice(product))) .collect(Collectors.toList()); return priceFutures.stream() .map(CompletableFuture::join) //join方法和Future的get有相同含义，唯一不同是不会抛异常 .collect(Collectors.toList());&#125;CompletableFuture和并行流很像，内部都采用同样的通用线程池，默认都是用固定数目的线程，具体线程数取决于Runtime.getRuntime.availableProcessors()的返回值。如果通用线程池大小是8，当getPrice()方法延迟足够长而商店数量增多的时候， 上面并行流和CompletableFuture方式的性能都会下降，因为8个线程都处于忙碌状态，之后的查询都要等待前面操作释放出空闲线程。并行流很难解决这种场景，而CompletableFuture具有并行流API无法提供的优势，它允许对执行器Executor进行配置，尤其是线程池的大小。定制执行器：123private final Executor executor = Executors.newFixedThreadPool(100);...CompletableFuture.supplyAsync(() -&gt; shop.getName() + "price is" + shop.getPrice(product), executor);这样商店数目增加就不会影响效率了。总结：并行流和分支/合并框架更适用于实现并行处理，而CompletableFuture更适合实现并发，在同一个CPU上执行松耦合任务，充分利用CPU的核，所以CompletableFuture更适合IO密集型任务，并行流和ForkJoinPool更适合CPU密集型任务。 使用CompletableFuture1. 创键获取CompletableFuture1234static &lt;U&gt; CompletableFuture&lt;U&gt; supplyAsync(Supplier&lt;U&gt; supplier);static &lt;U&gt; CompletableFuture&lt;U&gt; supplyAsync(Supplier&lt;U&gt; supplier, Executor executor);static CompletableFuture&lt;Void&gt; runAsync(Runnable runnable);static CompletableFuture&lt;Void&gt; runAsync(Runnable runnable, Executor executor); runAsync需要Runnable为参数，不返回任何值，如果需要处理异步操作并返回结果使用supplyAsync. 2. 组合futures12345678//thenApply 参数function的函数描述符为 T -&gt; U&lt;U&gt; CompletableFuture&lt;U&gt; thenApply(Function&lt;? super T,? extends U&gt; fn);&lt;U&gt; CompletableFuture&lt;U&gt; thenApplyAsync(Function&lt;? super T,? extends U&gt; fn);&lt;U&gt; CompletableFuture&lt;U&gt; thenApplyAsync(Function&lt;? super T,? extends U&gt; fn, Executor executor);//thenCompose 参数function的函数描述符为 T -&gt; CompletableFuture&lt;U&gt;&lt;U&gt; CompletableFuture&lt;U&gt; thenCompose(Function&lt;? super T, ? extends CompletionStage&lt;U&gt;&gt; fn);&lt;U&gt; CompletableFuture&lt;U&gt; thenComposeAsync(Function&lt;? super T, ? extends CompletionStage&lt;U&gt;&gt; fn);&lt;U&gt; CompletableFuture&lt;U&gt; thenComposeAsync(Function&lt;? super T, ? extends CompletionStage&lt;U&gt;&gt; fn, Executor executor); 从方法定义看，thenCompose可以接受一个function作为参数，这个function的函数描述符是T -&gt; CompletableFuture&lt;U&gt;，它允许对两个异步操作复合流水线，比如创建两个CompletableFuture对象，对第一个CompletableFuture对象调用thenCompose，并向它传递一个函数，当第一个CompletableFuture执行完毕后，结果将作为该函数的参数，这个函数的返回值是以第一个CompletableFuture返回作为输入计算出的第二个CompletableFuture对象。例子(只为了展示用法)：首先创建一个double集合，然后第一个CompletableFuture取每一个double的intValue()，当执行完毕时调用thenCompose方法，将执行结果作为thenCompose参数中的函数的参数，计算第二个CompletableFuture对象，把每个整型转换成字符串。最后输出的结果是1 2 3 4 5。 3. 整合futures，无论是否依赖123456&lt;U,V&gt; CompletableFuture&lt;V&gt; thenCombine(CompletionStage&lt;? extends U&gt; other, BiFunction&lt;? super T,? super U,? extends V&gt; fn);&lt;U,V&gt; CompletableFuture&lt;V&gt; thenCombineAsync(CompletionStage&lt;? extends U&gt; other, BiFunction&lt;? super T,? super U,? extends V&gt; fn);&lt;U,V&gt; CompletableFuture&lt;V&gt; thenCombineAsync(CompletionStage&lt;? extends U&gt; other, BiFunction&lt;? super T,? super U,? extends V&gt; fn, Executor executor); 第二个参数BiFunction定义如何将两个CompletableFuture的结果组合在一起。 4. completion事件之前所说的例子都是在所有商店的返回值都取得之后才显示商品价格。如果想要商店返回商品价格第一时间就显示返回值就需要completion事件。12345678//thenAcceptCompletableFuture&lt;Void&gt; thenAccept(Consumer&lt;? super T&gt; action);CompletableFuture&lt;Void&gt; thenAcceptAsync(Consumer&lt;? super T&gt; action);CompletableFuture&lt;Void&gt; thenAcceptAsync(Consumer&lt;? super T&gt; action, Executor executor);//thenRunCompletableFuture&lt;Void&gt; thenRun(Runnable action);CompletableFuture&lt;Void&gt; thenRunAsync(Runnable action);CompletableFuture&lt;Void&gt; thenRunAsync(Runnable action, Executor executor);CompletableFuture类中还提供了一些其他的completion事件，可以看做给CompletableFuture注册一个回调函数，在Future执行完毕或者计算结果可用时针对性执行一些程序。 参考：《Java 8函数式编程》– Richard Warburton《Java 8 in Action》– Raoul-Gabriel Urma, Mario Fusco, Alan Mycroft]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>Java 8</tag>
+        <tag>CompletableFuture</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[关于《龙族》]]></title>
+    <url>%2F2017%2F10%2F18%2F%E5%85%B3%E4%BA%8E%E3%80%8A%E9%BE%99%E6%97%8F%E3%80%8B%2F</url>
+    <content type="text"><![CDATA[听说《上海堡垒》要拍电影了。想来江南是要忙着做编剧去了，不知道龙五又要等到什么时候。谈到《龙族》不得不吐槽作者。我还从没见过哪个作家像南大这样拖稿的，当然他主业太多，没时间搞写作的副业。 我从大一上学期开始追海贼，下学期追妖尾，追龙族却是从高二开始的。今年妖尾完结了，龙五还遥遥无期。高中的时候没多少课余时间，一周只有半天假，也还是磕磕绊绊地追了两部。因为看了龙族，后来又顺带看了《此间的少年》和《九州缥缈录》，但都没能像龙族这样让我钟意。 龙族并不是第一眼就讨人喜欢的，主角又衰又懦弱，一副小心翼翼垂头丧气的样子却还是当众出丑，读起来并不酣畅淋漓。然而诺诺适时地登场，她推门而入，目光如刀，牵起这个衰仔，高傲地穿过人群。 人一生里总有几次觉得自己看见了天堂之门洞开，路明非等了十八年，在他最衰的那一刻，门开了。 我最开始并不喜欢路明非，吸引我看下去的是浑身都是棱角，骄傲又耀眼的诺诺 看龙族的女生可能有超过三分之一喜欢凯撒，多金又帅气，霸道又温柔，这样的人却偏偏又专一，没有一丝破绽。应该还有超过三分之一喜欢楚子航，沉默，冷静，仗义，强得离谱。剩下的大概也没多少喜欢路明非，因为他确实从头衰到脚。然而路明非才是大部分人的样子。有想做的事，想保护的人，但是他实在太衰了，只能窝在角落里，目光呆滞，盯着聚光灯下的凯撒牵着诺诺的手，还要嘟囔着学姐你要幸福这样的烂话。 最孤单的人分两种，一种恨不得全世界都跟他一样倒霉，一种则希望别人能幸福，因为看到幸福的人，他也略略觉得温暖。 他总是这样衰，衰到忘记是自己卖掉灵魂斩了龙王，是自己在三峡的江底豁出命救下的诺诺。他做了想做的事，保护了要保护的人，站在聚光灯下的依然不是他，所以他认了命，以为自己只能是个衰人。我一直在等着路明非撕掉懦弱的面具，穿越荒原，竖起战旗，哪怕失去灵魂，背叛世界，也不要耷拉着脑袋，满嘴烂话。但是直到第四部，他都还在有气无力地耍着贫嘴。 龙族是本很难定义的小说。它看起来好像是个中二的屠龙故事，又好像是衰仔的自我救赎。我不知道江南最想表达什么，在我看来，这更像是一群孤独者的狂欢。龙族里的每一个主角几乎都是孤独的。 凯撒似乎是最不应该孤独的。他几乎拥有一切，生来就是领袖，注定是屠龙的英雄，于是便也没有人在乎其实他也只是个破小孩。所以当他遇到诺诺，好像从井口照下一道光，人生中又多了其他寄托。凯撒这样的人，愿意满世界地追着一个女孩跑，也就不难理解了。他那么孤独，如果没有诺诺，就只有自己一个人了。 楚子航则不同，他是一眼就看得出来的孤独。他的孤独更多来自愧疚。在雨中的高架桥上，看着嬉皮笑脸一事无成的老爸挥舞着太刀淹没在死侍中，他却只能开着迈巴赫惊恐地逃走。从那天起他再也没有畏惧过，即使一个人面对龙王。对于楚子航，最大的荣耀应该是和父亲一起战死吧。后来他遇到了夏弥，似乎终于有个女孩要从孤独中拉他出来了。他第一次动了心，女孩却是条龙。他从此再也逃不出来了。 昂热的孤独隐藏的很好，却也很明显。他的孤独源自仇恨，继而表现在屠龙的狂热上。一个一百多岁的老头，每天混迹在上流酒宴，搂着法国名模谈笑风生。但当他面对真正的龙类的时候，立刻变了一个人。不再是款款而谈的绅士，更像杀红眼的亡命之徒。只有那些跟他一样老得掉了牙的伙计才知道，眼看着同伴一个一个死在自己面前，昂热是怎么坚持活下来的。他孤独到靠着仇恨支撑自己生的希望。 而路明非，大概是孤独的极点了。明知道什么事都不可能，还非要揣着希望，明明想为什么人把命都赌上，可是连下注的理由都没有，这大概就是路明非的孤独。 你最爱的人，你为他做了很多事，但他不知道，因为你觉得做这些事都是应该的，你忘记跟他说了。 他的孤独，是从不被需要，不管他做了什么。没有人觉得他多重要，没有人关心他做了什么，渐渐连他自己都觉得自己是多余的。唯一关心他的人，是一心想买断他灵魂的路鸣泽。这是一个死结。只有他卖掉灵魂歇斯底里的时候，才觉得自己是被需要的，可是当他真的卖光了灵魂也许就只剩下永恒的孤独了。不管是人还是龙，路明非都注定要踽踽独行。 路明非倒也不是一直这样孤独，至少有一段时间不是。龙族里的女性角色都很棒，不论是零，诺诺，苏恩曦还是酒德麻衣。但是绘离衣更让人难忘。我猜很多人最开始喜欢绘离衣，应该是因为只有她喜欢路明非吧。她血统纯正，心智却不足，就像活在自己世界里的孩子，很难定义她对路明非的喜欢。但是对她来说，路明非一定很重要，比自己的生命都重要。 “04.24，和Sakura去东京天空树，世界上最暖和的地方在天空树的顶上。”“04.25，和Sakura去明治神宫，有人在那里举办婚礼。”“04.26，和Sakura去迪士尼，鬼屋很可怕，但是有Sakura在，所以不可怕。”“Sakura最好了。” 绘离衣的日记里都是他。明明路明非那么渴望有人在乎他，终于有个人视他如生命，他却没有抓住。小怪兽终究要被正义的奥特曼杀死，他没能像当时救诺诺那样救绘离衣。真替绘离衣不值，为了救诺诺，路明非毅然决然地卖掉灵魂。但是救绘离衣的时候，他却犹豫了，即使她说Sakura最好了。江南收了那么多刀片还是写死了绘离衣，也许路明非就应该是一个人，是走向深渊，还是涅槃重生。 未完待续]]></content>
+      <categories>
+        <category>小说</category>
+      </categories>
+      <tags>
+        <tag>小说</tag>
+        <tag>龙族</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[Java 8 - Stream]]></title>
+    <url>%2F2017%2F10%2F17%2FJava-8-Stream%2F</url>
+    <content type="text"><![CDATA[流的概念流允许以声明式方式处理数据集合，可以姑且把它们看成遍历数据集的高级迭代器。此外流可以透明地并行处理。 1.优点 声明性 — 更简洁，更易读 可复合 — 更灵活 可并行 — 性能更好 2.流操作有两个重要的特点 流水线 — 很多流操作本身会返回一个流，这样多个操作就可以链接起来形成流水线。 内部迭代 — 流的迭代在背后进行，与显式使用迭代器不同。 3.集合和流的区别在于什么时候计算。集合中的每个元素都要先算出来才添加到集合中，流则是在概念上固定的数据结构，其元素是按需计算的。这个思想是用户仅仅从流中提取需要的值。从另一个角度看流就像延迟创建的集合。 4.流与迭代器类似，只能遍历一次，遍历完这个流就已经被消费掉了。 5.流操作可以分为两类，中间操作和终端操作: 中间操作指可以连接起来的流操作：如filter，sorted，map和limit等，除非流水线触发终端操作，否则中间操作不会执行任何结果。 终端操作可以从流的流水线生成结果，如forEach，collect。 6.使用流一般包括三件事： 一个数据源（如集合）来执行一个操作 一个中间操作链，形成流水线 一个终端操作，执行流水线并生成结果 使用流1. 筛选和切片下面列举几个常见的流12345678//用谓词筛选Stream&lt;T&gt; filter(Predicate&lt;? super T&gt; predicate);//筛选各异的元素Stream&lt;T&gt; distinct();//截断流，返回不超过给定长度的流Stream&lt;T&gt; limit(long maxSize);//返回扔掉前n个元素的流，如果流中元素不足n个则返回空流Stream&lt;T&gt; skip(long n);下面代码筛选出苹果中重于100克的第4和第5个苹果。12List&lt;Apple&gt; bigAppleList = appleList.stream().filter(apple -&gt; apple.getWeight() &gt; 100) .limit(5).skip(3).collect(toList()); 2. 映射下面列举几个常见的流123//map方法接受function作为参数，并被应用在每个元素上映射成新的元素&lt;R&gt; Stream&lt;R&gt; map(Function&lt;? super T, ? extends R&gt; mapper);&lt;R&gt; Stream&lt;R&gt; flatMap(Function&lt;? super T, ? extends Stream&lt;? extends R&gt;&gt; mapper);从flatMap的函数定义来看，它接受一个function，而这个function的第二个参数是stream，也就是说函数描述符为T→Stream， Arrays中有stream()方法可以将数组转化成流。等同于：map被应用到数组中的两个字符串”Hello”和”World”中，映射成两个String数组，而我们想要的是Stream&lt;String&gt;而不是Stream&lt;String[]&gt;，如果用map来映射将会得到流的列表，所以需要用flatMap把各个数组映射成一个流。简单来说，flatMap方法会把一个流中的每个值都转换成另一个流，然后把所有流连接起来成为一个流。 3. 查找和匹配12345678910//流中是否有一个元素匹配给定的谓词boolean anyMatch(Predicate&lt;? super T&gt; predicate);//流中的元素是否都能匹配给定的谓词boolean allMatch(Predicate&lt;? super T&gt; predicate);//流中没有元素与给定的谓词匹配boolean noneMatch(Predicate&lt;? super T&gt; predicate);//返回流中任意元素。流水线将会利用短路找到结果立即结束Optional&lt;T&gt; findAny();//找到第一个元素。在并行上限制较多，如果不关心返回元素是哪一个建议使用findAny()，因为它在并行流上限制较少Optional&lt;T&gt; findFirst(); 4. 归约1234// 第一个参数为初始值T reduce(T identity, BinaryOperator&lt;T&gt; accumulator);// 无初始值,考虑流中没有任何元素的情况，reduce无法返回和，所以结果包裹在Optional对象里以表明和可能不存在Optional&lt;T&gt; reduce(BinaryOperator&lt;T&gt; accumulator); 想计算整型数组的和：结果是20。reduce() 也可以用来求最大值或者最小值。 数值流和函数式接口的原始类型特化一样，为避免装箱拆箱成本，Stream API提供了数值流。Java 8引入三个原始类型特化流：IntStream, DoubleStream和LongStream, 分别将流中的元素特化为int，double和long，从而避免了reduce时暗含的拆箱成本。每个接口都带来了进行常用数值归约的新方法，例如count(), max(), min(), average()和sum()等。映射到数值流：123IntStream mapToInt(ToIntFunction&lt;? super T&gt; mapper);LongStream mapToLong(ToLongFunction&lt;? super T&gt; mapper);DoubleStream mapToDouble(ToDoubleFunction&lt;? super T&gt; mapper);转换回对象流：1Stream&lt;Integer&gt; boxed();使用方法：12IntStream intStream = appleList.stream().mapToInt(Apple::getWeight); //转换成数值流Stream&lt;Integer&gt; stream = intStream.boxed(); //转换成Stream数值流中有很多实用的方法，如求数值范围，IntStream evenNumbers = IntStream.rangeClosed(1, 100); 构建流除了从集合生成流，还有其他几种生成流的方式 1. 由值构建流12Stream&lt;String&gt; stream = Stream.of("zhao", "hong", "yu");Stream&lt;String&gt; emptyStream = Stream.empty(); 2. 由数组构造流12String[] name = &#123;"zhao", "hong", "yu"&#125;;Stream&lt;String&gt; stream = Arrays.stream(name); 3. 由文件生成流java.nio.file.Files中有很多静态方法可以返回一个流，例如Files.lines会返回指定文件中各行构成的字符串流。使用的不多，先不介绍。 4. 由函数生成流Stream API 提供了两个静态方法从函数生成流：Stream.iterate和Stream.generate。这两个操作可以创建无限流。一般会用limit来加以限制1Stream.iterate(0, n -&gt; n+2).limit(100).forEach(System.out::println);生成结果是从0开始公差为2的等差数列的前100项。 用流收集数据终端操作除了count, findFirst, reduce, forEach等，最常用的是collect操作。collect接受Collector作为参数Collectors类提供了很多常用的静态工厂方法生成Collector： 参考：《Java 8函数式编程》– Richard Warburton《Java 8 in Action》– Raoul-Gabriel Urma, Mario Fusco, Alan Mycroft]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>Java 8</tag>
+        <tag>Stream</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[Java 8 - Lambda]]></title>
+    <url>%2F2017%2F10%2F16%2FJava-8-Lambda%2F</url>
+    <content type="text"><![CDATA[基本概念从一个例子开始：用Lambda实现一个比较器 12Comparator&lt;Apple&gt; byWeight = (Apple apple1, Apple apple2) -&gt; apple1.getWeight().compareTo(apple2.getWeight()); Lambda表达式有三个部分： 参数列表：两个Apple 箭头：箭头把参数列表和Lambda主体分隔开 Lambda主体：比较两个Apple的重量。表达式就是Lambda的返回值 Lambda表达式的基本语法有两种： (parameters) -&gt; expression (parameters) -&gt; {statements;} 注：expression隐含了return，如果想显示返回语句需要使用第二种statements语法。 何时使用Lambda我们可以在函数式接口上使用Lambda表达式。函数式接口：只定义一个抽象方法的接口(比如例子中的Comparator接口只定义了一个compare()抽象方法)。注：Java 8中新增了默认方法，即在类没有对方法进行实现时，主体为方法提供默认实现的方法。不管有多少默认方法，只要接口只定义了一个抽象方法，它就仍然是一个函数式接口。 函数式接口函数式接口很有用，因为抽象方法的签名可以描述Lambda表达式的签名，函数式接口的抽象方法签名称为函数描述符。java.util.function包中定义了一些常用的函数式接口：(注：@FunctionalInterface 注解用于表示该接口会设计成一个函数式接口。接口代码省略了默认方法)。 1) Predicate1234@FunctionalInterfacepublic interface Predicate&lt;T&gt; &#123; boolean test(T t);&#125; Predicate接口定义了一个test抽象方法，接受泛型T对象，返回一个boolean。适用于filter中。 2) Consumer1234@FunctionalInterfacepublic interface Consumer&lt;T&gt; &#123; void accept(T t);&#125; Consumer定义了一个accept抽象方法，接受泛型T对象，没有返回。如果需要访问一个对象并对其执行某些操作就可以使用这个接口。 3) Function1234@FunctionalInterfacepublic interface Function&lt;T, R&gt; &#123; R apply(T t);&#125; Function接口定义了apply方法，接受泛型T对象，返回泛型R对象。适用于map方法中。 4) 其他函数式接口 函数式接口 抽象方法 BiConsumer&lt;T, U&gt; void accept(T t, U u) BiFunction&lt;T, U, R&gt; R apply(T t, U u) BinaryOperator&lt;T&gt; extends BiFunction&lt;T,T,T&gt; T apply(T t1, T t2) BiPredicate&lt;T, U&gt; boolean test(T t, U u) Supplier&lt;T&gt; T get() UnaryOperator&lt;T&gt; extends Function T apply(T t) 5) 原始类型特化上述函数式接口的抽象方法都使用了泛型，泛型只能绑定引用类型，那么在输入输出是原始类型时会进行自动装箱，影响性能。 java.util.function中提供了专门的函数式接口避免装箱操作。比如: 1234@FunctionalInterfacepublic interface IntPredicate &#123; boolean test(int value);&#125; 如何使用它：12IntPredicate evenNumbers = (int i) -&gt; i% 2 == 0;evenNumbers.test(1000);使用IntPredicate不会对1000装箱，如果用Predicate&lt;Integer&gt;会把1000装到Integer对象中。之前提到的函数式接口都有很多对应的类型特化接口，具体可在java.util.function包中查看。 方法引用方法引用可以看做仅仅调用特定方法的Lambda的一种快捷写法，语法糖。构建方法引用： 指向静态方法的方法引用：例如Integer的parseInt方法，可以写作Integer:parseInt 指向任意类型实例方法的方法引用：例如String的length方法，写作String::length 指向现有对象的实例方法的方法引用：与第二种的区别是第二种是在引用一个对象的方法，而这个对象本身是Lambda的一个参数，第三种方法引用指在Lambda中调用一个已存在的外部对象的方法 复合Lambda表达式多个简单的Lambda表达式可以复合成复杂的表达式，比如让两个Predicate做or操作，或者一个Function的输出作为另一个Function的输入。但是函数式接口只有一个抽象方法，实现复合操作的是前面提到的默认方法。 123456789101112131415@FunctionalInterfacepublic interface Predicate&lt;T&gt; &#123; default Predicate&lt;T&gt; and(Predicate&lt;? super T&gt; other) &#123; Objects.requireNonNull(other); return (t) -&gt; test(t) &amp;&amp; other.test(t); &#125; default Predicate&lt;T&gt; negate() &#123; return (t) -&gt; !test(t);&#125; default Predicate&lt;T&gt; or(Predicate&lt;? super T&gt; other) &#123; Objects.requireNonNull(other); return (t) -&gt; test(t) || other.test(t); &#125; &#125; Predicate接口除了唯一抽象方法外，还有三个默认方法，negate，and和or，可以重用已有的Predicate来创建更复杂的谓词。 12345678910//苹果是红的Predicate&lt;Apple&gt; redApple = apple -&gt; "red".equals(apple.getColor()); //苹果不是红的Predicate&lt;Apple&gt; notRedApple = redApple.negate(); //苹果是红色又比100克重 Predicate&lt;Apple&gt; redAndHeavyApple = redApple.and(apple -&gt; apple.getWeight() &gt; 100);//苹果是比100克重的红苹果，或者是绿苹果 Predicate&lt;Apple&gt; redAndHeavyAppleOrGreen = redApple.and(apple -&gt; apple.getWeight() &gt; 100) .or(apple -&gt; "Green".equals(apple.getColor())); 一个复合Function的例子： Function接口提供了andThen和compose两个默认方法，andThen相当于 multiply(add(x))，compose相当于 add(multiply(x))。所以上面程序的结果是：4和3。很多函数式接口都有默认方法来结合Lambda表达式复合成更复杂的表达式。 总结Lambda表达式可以理解为一种匿名函数，只有在接受函数式接口的地方才可以使用lambda表达式，它允许直接内联，为函数式接口的抽象方法提供实现，并且将整个表达式作为函数式接口的一个实例。 参考：《Java 8函数式编程》– Richard Warburton《Java 8 in Action》– Raoul-Gabriel Urma, Mario Fusco, Alan Mycroft]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>Java</tag>
+        <tag>Java 8</tag>
+        <tag>Lambda</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title><![CDATA[First Move]]></title>
+    <url>%2F2017%2F10%2F15%2FFirst-Move%2F</url>
+    <content type="text"><![CDATA[“你没有什么话想说吗？” — “有啊”“为什么不说？” — “懒得说”“那就写下来” 为什么做这个博客不知不觉工作了快五个月了，好像每天都有汹涌的信息和新鲜事灌进脑子里，密度远远超过了大学里。我一直在被动地接受新知识的冲击，继而渐渐感到不安。我不知道这些东西在哪，我不知道我有没有抓住他们。当我看到的越多，也就越知道我没看到的更多。 最近似乎独处的时间很多，其实也算不上独处，毕竟每天有超过十个小时窝在公司的椅子里。但是一天下来，好像也没怎么张过嘴。我已经慢慢学不会主动找人说话了，似乎习惯了一个人做事，也乐得清静。这样的生活久了，也就明白了我要依靠的只有自己罢了。 前段时间看了小朋友演的红楼梦，想起我曾经最迷的书就是这本。但是我现在连十二钗都记不全了。如此想来我用了两个暑假看了两遍，好像都在浪费时间了。心里觉得不甘，于是就又买了一套，当看到封面的时候，莫名觉得欣喜又感动，好像又看到了那个夏天，不写暑假作业，偷偷看“杂书”的我。 这些算不上什么理由，也毫无逻辑。我本来也不擅长写东西，不会引经据典，条理不清晰，没有论据论点。那到底为什么要搭这个博客呢？大概是想发现些问题，积累点知识，以后不至于失业吧；大概是一个人呆的时间久了，想做点有意思的事不至于太寂寞吧；大概是想记录下时光，给以后或许会迷茫的自己吧。可能这些原因都有，也可能都不是，我唯一真切地记得的是，昨天晚上躺在床上，脑子里有声音问我有没有什么话想说，突然发现自己也有很多想法要表达。那就做个博客吧。我看了看手机，十二点半，嗯，还早着。于是就一晚上都没睡。 要记录些什么我想，这应该会是个披着技术外衣的生活类博客吧。我给这个博客定的title是dabbler，牛津词典翻译成浅尝者，说白了就是半吊子。我觉得半吊子似乎是对自己很好的诠释。我好像还没有大牛们用技术推动世界的宏伟理想，所以应该会花很多时间来闲扯淡。 当然，不管怎样，至少他应该要穿着那件外衣的。不管工作中还是私下里，遇到的技术问题都值得记下来，看过的书也有必要做些笔记。但是只谈技术未免太严肃，就好像是一个从不洗头不洗澡对着电脑敲一天代码的死宅一样。如果有一天看了哪本小说，可能会记下里面几句话；如果看了哪部动漫，可能会交流二次元文化；如果出去旅游，可能会贴几张照片；如果有一天我遇到另一个人，那可能就有两个人写博客了。 不管怎样，我希望记录的东西不止有意义，有价值，更要有趣。至少对我来说是有趣的。以后有一天看到今天写的东西，还会笑着想那时候我可真蠢啊。 First Move这一篇就暂告一段落了。在写这几百个字的过程中，也算是重新认识自己，我的文笔是真的差。First move是标题，也是结尾，第一篇算是个契机，第一步也不只写篇博客这么肤浅。历史的车轮滚滚向前，哪有时间停滞不前。 竹杖芒鞋轻胜马，谁怕？一蓑烟雨任平生。 煮碗鸡汤喝，明天又是星期一。]]></content>
+      <categories>
+        <category>随笔</category>
+      </categories>
+      <tags>
+        <tag>生活</tag>
+        <tag>随笔</tag>
+      </tags>
+  </entry>
 </search>
