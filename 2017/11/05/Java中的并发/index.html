@@ -104,7 +104,7 @@
 <meta property="og:site_name" content="Dabbler">
 <meta property="og:description" content="Java 5之后，java.util.concurrent包的出现，取代了传统的块结构并发方式（synchronized、volatile等并发关键字的多线程编程方式），这篇主要总结Java的现代并发方式（Java 5之后）。 概念1. Java线程模型java线程模型建立在两个基本概念之上：  共享、默认可见的可变状态 抢占式线程调度  2. 设计理念 安全性与并发类型安全性：安全性指不管同时发">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2017-11-08T12:11:24.000Z">
+<meta property="og:updated_time" content="2017-11-11T05:37:56.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Java中的并发">
 <meta name="twitter:description" content="Java 5之后，java.util.concurrent包的出现，取代了传统的块结构并发方式（synchronized、volatile等并发关键字的多线程编程方式），这篇主要总结Java的现代并发方式（Java 5之后）。 概念1. Java线程模型java线程模型建立在两个基本概念之上：  共享、默认可见的可变状态 抢占式线程调度  2. 设计理念 安全性与并发类型安全性：安全性指不管同时发">
@@ -433,8 +433,9 @@
 <li>添加不同类型的锁：读/写锁</li>
 <li>对锁的阻塞没有限制，即允许一个方法中上锁，另一个方法中解锁</li>
 <li>如果线程得不到锁，允许线程后退或继续执行，或者做其他事情：tryLock()方法</li>
-<li>允许超时放弃取锁<br>Locks接口的两个实现类：ReentrantLock, ReentrantReadWriteLock（在需要很多读取线程而很少写入线程时性能更好）</li>
+<li>允许超时放弃取锁</li>
 </ul>
+<p>Locks接口的两个实现类：ReentrantLock, ReentrantReadWriteLock（在需要很多读取线程而很少写入线程时性能更好）</p>
 <h5 id="3-CountDownLatch"><a href="#3-CountDownLatch" class="headerlink" title="3. CountDownLatch"></a>3. CountDownLatch</h5><p>允许线程在通过同步屏障之前做些少量准备工作<br>在构建CountDownLatch实例时要提供一个int值的计数器，还有两个用来控制锁存器的方法，countDown()和await()方法，前者对计数器减一，后者让调用线程在计数器到0之前一直等待（如果计数器已经为0或更小则什么都不做）。</p>
 <h5 id="4-ConcurrentHashMap"><a href="#4-ConcurrentHashMap" class="headerlink" title="4. ConcurrentHashMap"></a>4. ConcurrentHashMap</h5><p>ConcurrentHashMap改进了Collections类中提供的synchronizedMap()功能，因为那些方法返回的集合中包含的锁比需要的多。多线程修改hashmap时并不需要把整个结构都锁住，只要锁住即将修改的桶就行。<br>好的并发HashMap实现在读取时不用锁，写入时只需锁住要修改的桶。<br>ConcurrentHashMap提供了原子操作的新方法：</p>
 <ul>
@@ -486,7 +487,7 @@
 </ul>
 <h5 id="3-自动并行化"><a href="#3-自动并行化" class="headerlink" title="3. 自动并行化"></a>3. 自动并行化</h5><p>Java 8引入了自动并行化概念，能够让一部分Java代码自动并行方式执行，例如parrellStream。<br>Java 8为ForkJoinPool添加了一个通用线程池，用来处理没有被显示提交到任何线程池的任务，默认线程数量等于运行计算机上的处理器数量。<br>但是这样存在一个严重的问题：该池是所有并行流共享的。默认情况，fork/join池会为每个处理器分配一个线程。假设你有一台16核的机器，这样你就只能创建16个线程。对CPU密集型的任务来说，这样是有意义的，因为你的机器确实只能执行16个线程，IO密集型任务会出现相互等待而被阻塞。</p>
 <blockquote>
-<p>参考：<br>《并发编程的艺术》– 方腾飞, 魏鹏, 程晓明等<br>《Java程序员修炼之道》– Benjamin J.Evans, Martijn Verburg </p>
+<p>参考：<br>《Java并发编程的艺术》– 方腾飞, 魏鹏, 程晓明等<br>《Java程序员修炼之道》– Benjamin J.Evans, Martijn Verburg </p>
 </blockquote>
 
       
