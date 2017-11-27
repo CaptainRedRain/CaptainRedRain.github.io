@@ -78,7 +78,7 @@
 <link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Java,I/O,Unix," />
+  <meta name="keywords" content="I/O,Unix,Java," />
 
 
 
@@ -97,7 +97,7 @@
 
 
 <meta name="description" content="I/O操作过程Linux内核将外部设备看成文件来读，读写操作会调用内核提供的系统命令，对文件的读写会返回文件描述符(file descriptor)，对socket读写会返回socketfd，描述符指向内核中的一个结构体。一个输入操作通常包括两个阶段：  等待数据准备好 从内核向用户进程复制数据  对于一个套接字的输入操作，第一步是等待网络数据到达，复制到内核中的某个缓冲区中。第二步从内核缓冲区复">
-<meta name="keywords" content="Java,I&#x2F;O,Unix">
+<meta name="keywords" content="I&#x2F;O,Unix,Java">
 <meta property="og:type" content="article">
 <meta property="og:title" content="I&#x2F;O模型">
 <meta property="og:url" content="http://captainhong.com/2017/11/27/I-O模型/index.html">
@@ -112,7 +112,7 @@
 <meta property="og:image" content="http://captainhong.com/img/IO06.png">
 <meta property="og:image" content="http://captainhong.com/img/IO07.png">
 <meta property="og:image" content="http://captainhong.com/img/IO08.png">
-<meta property="og:updated_time" content="2017-11-27T13:23:14.045Z">
+<meta property="og:updated_time" content="2017-11-27T13:25:09.613Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="I&#x2F;O模型">
 <meta name="twitter:description" content="I/O操作过程Linux内核将外部设备看成文件来读，读写操作会调用内核提供的系统命令，对文件的读写会返回文件描述符(file descriptor)，对socket读写会返回socketfd，描述符指向内核中的一个结构体。一个输入操作通常包括两个阶段：  等待数据准备好 从内核向用户进程复制数据  对于一个套接字的输入操作，第一步是等待网络数据到达，复制到内核中的某个缓冲区中。第二步从内核缓冲区复">
@@ -428,7 +428,7 @@
 <h4 id="Java-I-O"><a href="#Java-I-O" class="headerlink" title="Java I/O"></a>Java I/O</h4><h5 id="1-BIO模型"><a href="#1-BIO模型" class="headerlink" title="1) BIO模型"></a>1) BIO模型</h5><p>BIO服务端通常由一个独立的Acceptor线程负责监听客户端连接，为每一个客户端创建创建新的线程进行链路处理，处理完之后线程销毁。<br>线程数和客户端并发数1：1，无法满足高性能高并发场景。</p>
 <p><img src="/img/IO07.png" alt="BIO模型"></p>
 <p>通过线程池和任务队列可以一定程度改善线程数膨胀的问题，把socket封装成task放到线程池中处理，通过设置线程池的最大线程数和队列大小来控制资源占用。<br>这种模型读写操作都是阻塞的，如果读取故障服务节点导致输入流阻塞，可能导致所有线程都被故障节点阻塞，后续IO将会放到任务队列中，如果采用阻塞队列实现，队列积满后后续入队列的操作会被阻塞，Acceptor线程接收新的客户端连接会被阻塞在队列之后，客户端请求被拒绝，客户端会发生超时。</p>
-<h5 id="2-NIO模型"><a href="#2-NIO模型" class="headerlink" title="2) NIO模型"></a>2) NIO模型</h5><p>JAVA NIO提供了buffer<br>Buffer：NIO通过缓冲区处理数据，读取的时候直接读到缓冲区中，写入的时候写到缓冲区中，访问NIO中的数据都是通过缓冲区完成的。<br>Channel：通道和流的区别是通道是全双工的，流只能是InputStream或者OutputStream的一个子类。<br>Selector：多路复用器，提供选择已就绪任务的能力。Selector不断轮询注册在其上的channel，当某个channel发生读写事件时会被轮询出来，通过SelectionKey获取就绪channel，进行后续IO操作。JDK使用epoll实现Selector，没有最大句柄限制，所以一个线程可以接入成千上万客户端。<br>典型的NIO服务端实现：</p>
+<h5 id="2-NIO模型"><a href="#2-NIO模型" class="headerlink" title="2) NIO模型"></a>2) NIO模型</h5><p>JAVA NIO提供：<br>Buffer：NIO通过缓冲区处理数据，读取的时候直接读到缓冲区中，写入的时候写到缓冲区中，访问NIO中的数据都是通过缓冲区完成的。<br>Channel：通道和流的区别是通道是全双工的，流只能是InputStream或者OutputStream的一个子类。<br>Selector：多路复用器，提供选择已就绪任务的能力。Selector不断轮询注册在其上的channel，当某个channel发生读写事件时会被轮询出来，通过SelectionKey获取就绪channel，进行后续IO操作。JDK使用epoll实现Selector，没有最大句柄限制，所以一个线程可以接入成千上万客户端。<br>典型的NIO服务端实现：</p>
 <p><img src="/img/IO08.png" alt="NIO模型"></p>
 <p>打开ServerSocketChannel，绑定ip和端口，创建Selector，把channel注册到selector上，监听SelectionKey.OP_ACCEPT操作。<br>轮询注册到selector上的channel：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">Set&lt;SelectionKey&gt; selectedKeys = selector.selectedKeys();</div><div class="line">Iterator&lt;SelectionKey&gt; it = selectedKeys.iterator();</div><div class="line"><span class="keyword">while</span>(it.hasNext())&#123;</div><div class="line">    key = it.next();</div><div class="line">    <span class="comment">//处理请求</span></div><div class="line">    <span class="keyword">if</span>(key.isAcceptable())&#123;</div><div class="line">        ServerSocketChannel ssc = key.channel();</div><div class="line">        SocketChannel sc = ssc.accept();</div><div class="line">        sc.register(selector, SelectionKey.OP_READ);</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">if</span>(key.isReadable())&#123;</div><div class="line">        SocketChannel sc = key.channel();</div><div class="line">        ByteBuffer readBuffer = ...;</div><div class="line">        <span class="keyword">int</span> readBytes = sc.read(readBuffer);</div><div class="line">        <span class="keyword">if</span>(readBytes &gt; <span class="number">0</span>)&#123;</div><div class="line">            <span class="comment">//读到字节</span></div><div class="line">            doWrite();</div><div class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span>(readBytes &lt; <span class="number">0</span>)&#123;</div><div class="line">            <span class="comment">//链路关闭，关闭channel，释放资源</span></div><div class="line">        &#125; <span class="keyword">else</span>&#123;</div><div class="line">            <span class="comment">//没有读到，忽略</span></div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    ......</div><div class="line">&#125;</div></pre></td></tr></table></figure>    
@@ -460,11 +460,11 @@
       
         <div class="post-tags">
           
-            <a href="/tags/Java/" rel="tag"># Java</a>
-          
             <a href="/tags/I-O/" rel="tag"># I/O</a>
           
             <a href="/tags/Unix/" rel="tag"># Unix</a>
+          
+            <a href="/tags/Java/" rel="tag"># Java</a>
           
         </div>
       
